@@ -1,0 +1,21 @@
+export enum SegmentEnum {
+    PUBLIC_ADMINISTRATION = 'Administração Pública',
+    AGRICULTURE = 'Agricultura',
+    SOCIAL_ASSISTANCE = 'Assistência Social',
+    COMMERCE = 'Comércio',
+    MEDIA_COMMUNICATION = 'Comunicação e Mídia',
+    COOPERATIVISM = 'Cooperativismo',
+    CULTURE = 'Cultura',
+    CIVIL_DEFENSE = 'Defesa Civil',
+    EDUCATION = 'Educação',
+    SPORT = 'Esporte',
+    FINANCE = 'Finanças e Bancos',
+    INDUSTRY = 'Indústria',
+    NON_GOVERNAMENTAL_ORGANIZATION = 'Organização Não Governamental',
+    RELIGIOUS_ORGANIZATION = 'Organização Religiosa',
+    OTHERS = 'Outros',
+    HEALTH = 'Saúde',
+    PUBLIC_SAFETY = 'Segurança Pública',
+    TECNOLOGY = 'Tecnologia',
+    TRANSPORT = 'Transporte'
+}
