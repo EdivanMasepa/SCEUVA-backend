@@ -9,13 +9,13 @@ export class UserController {
   constructor(private readonly userService: UserService) {}
 
   @Post()
-  @ApiOperation({summary: 'Teste'})
   @ApiResponse({status: 201, description: 'Registro criado com sucesso.'})
   create(@Body() createUserDto: CreateUserDto) {
     return this.userService.create(createUserDto);
   }
 
   @Get()
+  @ApiResponse({status: 200, type: ListUserDto})
   findAll() {
     return this.userService.findAll();
   }
