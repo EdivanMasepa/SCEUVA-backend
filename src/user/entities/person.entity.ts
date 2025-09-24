@@ -19,7 +19,7 @@ export class PersonEntity{
     gender: GenderEnum;
 
     @Column({name: 'situacao', type: 'enum', enum: RiskLevelEnum, nullable:false})
-    situation: RiskLevelEnum;
+    riskLevel: RiskLevelEnum;
     
     @OneToOne(() => UserEntity, user => user.person, {nullable:false, onUpdate:'CASCADE', onDelete:'CASCADE', cascade:true})
     @JoinColumn({name:'id_usuario'})

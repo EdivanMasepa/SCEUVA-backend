@@ -17,11 +17,11 @@ export class UpdateUserDTO{
     @IsPhoneNumber('BR', {message: 'Número de telefone inválido.'})
     phone?: string;
 
-    @ValidateNested() 
-    @Type(() => AtualizaPessoaDTO)
-    person?: AtualizaPessoaDTO;
+    // @ValidateNested() 
+    // @Type(() => AtualizaPessoaDTO)
+    // person?: AtualizaPessoaDTO;
 
-    @ValidateNested()
-    @Type(() => AtualizaInstituicaoDTO)
-    instituition?: AtualizaInstituicaoDTO;
+    // @ValidateNested()
+    // @Type(() => AtualizaInstituicaoDTO)
+    // instituition?: AtualizaInstituicaoDTO;
 }

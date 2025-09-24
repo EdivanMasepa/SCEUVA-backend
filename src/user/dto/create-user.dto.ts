@@ -1,11 +1,14 @@
-import { IsEmail, IsNotEmpty, IsNumber, IsOptional, IsPhoneNumber, IsString, MinLength, ValidateNested } from "class-validator";
+import { IsEmail, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsPhoneNumber, IsString, MinLength, ValidateNested } from "class-validator";
 import { Type } from "class-transformer";
+import { UserTypeEnum } from "src/shared/enums/user-type.enums";
+import { CreatePersonDTO } from "./person/create-person.dto";
+import { CreateInstituitionDTO } from "./instituition/create-instituition.dto";
 
 export class CreateUserDTO{
     
-   // @IsEnum({message: 'Tipo do usuário não está predefinido.'})
+    @IsEnum({message: 'Tipo do usuário não está predefinido.'})
     @IsNotEmpty({message: 'Tipo do usuário não informado.'})
-    userType:TipoUsuarioEnum;
+    userType:UserTypeEnum;
     
     @IsString({message: 'NOME deve ser do tipo texto.'})
     @IsNotEmpty({message: 'NOME não pode ser vazio.'})
@@ -31,10 +34,10 @@ export class CreateUserDTO{
 
     @ValidateNested() 
     @Type(() => Object)
-    person?: CriaPessoaDTO;
+    person?: CreatePersonDTO;
 
     @ValidateNested()
     @Type(() => Object)
-    instituition?: CriaInstituicaoDTO;
+    instituition?: CreateInstituitionDTO;
     
 }

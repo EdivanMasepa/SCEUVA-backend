@@ -1,22 +1,123 @@
-import { Injectable } from '@nestjs/common';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
+import { BadRequestException, Injectable, InternalServerErrorException } from '@nestjs/common';
+import { CreateUserDTO } from './dto/create-user.dto';
+import { UpdateUserDTO } from './dto/update-user.dto';
+import { InjectRepository } from '@nestjs/typeorm';
+import { UserEntity } from './entities/user.entity';
+import { PersonEntity } from './entities/person.entity';
+import { InstituitionEntity } from './entities/instituition.entity';
+import { Repository } from 'typeorm';
+import * as bcrypt from 'bcrypt';
+import { UserTypeEnum } from 'src/shared/enums/user-type.enums';
 
 @Injectable()
 export class UserService {
-  create(createUserDto: CreateUserDto) {
-    return 'This action adds a new user';
+
+  constructor(
+    @InjectRepository(UserEntity) private readonly userRepository: Repository<UserEntity>,
+    @InjectRepository(PersonEntity) private readonly userPersonRepository: Repository<PersonEntity>,
+    @InjectRepository(InstituitionEntity) private readonly userIsntituitionRepository: Repository<InstituitionEntity>
+  ){}
+  
+  async create(createUser: CreateUserDTO) {
+    try {
+      if(await this.findByIdentifier(createUser.phone))
+        throw new BadRequestException('Número de telefone já cadastrado.');
+      
+      if(createUser.email && await this.findByIdentifier(createUser.email))
+        throw new BadRequestException('E-mail já cadastrado.');
+
+      if(createUser.password != createUser.confirmPassword)
+        throw new BadRequestException('As senhas não conferem.');
+      
+      const senhaHasheada: string = await bcrypt.hash(createUser.password, 10);
+    
+      const userEntity:UserEntity = new UserEntity();
+      userEntity.typeUser = createUser.userType,
+      userEntity.name = createUser.name;
+      userEntity.email = createUser.email;
+      userEntity.phone = createUser.phone;
+      userEntity.password = senhaHasheada;
+
+      const createdUser: UserEntity = await this.userRepository.save(userEntity);
+
+      if(createUser.userType === UserTypeEnum.PERSON && createUser.person != null){
+        //  if(!this.validarCPF(usuario.pessoa.cpf))
+        //   throw new BadRequestException('CPF inválido.');
+
+        if(await this.findByIdentifier(createUser.person.cpf))
+          throw new BadRequestException('CPF já cadastrado.');
+
+        const personEntity: PersonEntity = new PersonEntity();
+
+        personEntity.cpf = createUser.person.cpf;
+        personEntity.birthDate = createUser.person.birthDate;
+        personEntity.gender = createUser.person.gender;
+        personEntity.riskLevel = createUser.person.riskLevel;
+
+        const createdPerson = await this.userPersonRepository.save(personEntity);           
+        createdUser.person = createdPerson;
+
+        await this.userRepository.save(createdUser);
+
+        return{statusCode: 201, message: 'Usuário cadastrado com sucesso.'};
+              
+      }
+
+      else if(createUser.userType === UserTypeEnum.INSTITUITION && createUser.instituition != null){
+        //  if(!this.validarCNPJ(createUser.instituition.cnpj))
+        //   throw new BadRequestException('CNPJ inválido.');
+
+        if(await this.findByIdentifier(createUser.instituition.cnpj))
+          throw new BadRequestException('CNPJ já cadastrado.');
+
+        const instituitionEntity:InstituitionEntity = new InstituitionEntity();
+
+        instituitionEntity.cnpj = createUser.instituition.cnpj;
+        instituitionEntity.foundationDate = createUser.instituition.fundationDate;
+        createUser.instituition.segment ? instituitionEntity.segment = createUser.instituition.segment : null
+
+        const createdInstituition = await this.userPersonRepository.save(instituitionEntity);           
+        createdUser.instituition = createdInstituition;
+
+        await this.userRepository.save(createdUser);
+
+        return{statusCode: 201, message: 'Usuário cadastrado com sucesso.'};
+      }
+    } catch (erro) {
+      
+      if(erro instanceof BadRequestException)
+        throw erro;
+      
+      throw new InternalServerErrorException('Erro interno. Verifique as informações e tente novamente.')
+    }
+  }
+
+  async findByIdentifier(parameter: any): Promise<UserEntity | null>{
+    let user = await this.userRepository.findOneBy({id: parameter})
+    if(user) return user;
+
+    user = await this.userRepository.findOne({where: {email: parameter}})
+    if(user) return user;
+
+    user = await this.userRepository.findOne({where: {phone: parameter}})
+    if(user) return user;
+
+    let userPerson = await this.userPersonRepository.findOne({where: {cpf: parameter}})
+    if(userPerson) 
+      user = await this.userRepository.findOneBy({id: userPerson.user.id})
+  
+    let userIsntituitionRepository = await this.userIsntituitionRepository.findOne({where: {cnpj: parameter}})
+    if(userIsntituitionRepository) 
+       user = await this.userRepository.findOneBy({id: userIsntituitionRepository.user.id})
+    
+    return null;
   }
 
   findAll() {
     return `This action returns all user`;
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} user`;
-  }
-
-  update(id: number, updateUserDto: UpdateUserDto) {
+  update(id: number, updateUserDto: UpdateUserDTO) {
     return `This action updates a #${id} user`;
   }
 
