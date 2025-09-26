@@ -41,8 +41,8 @@ export class UserService {
       const createdUser: UserEntity = await this.userRepository.save(userEntity);
 
       if(createUser.userType === UserTypeEnum.PERSON && createUser.person != null){
-        //  if(!this.validarCPF(usuario.pessoa.cpf))
-        //   throw new BadRequestException('CPF inválido.');
+        if(!this.validateCPF(createUser.person.cpf))
+           throw new BadRequestException('CPF inválido.');
 
         if(await this.findByIdentifier(createUser.person.cpf))
           throw new BadRequestException('CPF já cadastrado.');
@@ -123,5 +123,45 @@ export class UserService {
 
   remove(id: number) {
     return `This action removes a #${id} user`;
+  }
+
+  validateCPF(cpf: string){
+    cpf = cpf.replace(/\D/g, '');
+    if(cpf.length !== 11 || /^(\d)\1{10}$/.test(cpf)) return false;
+
+    let cpfList = cpf.split('');
+    let cpfToNumber: number[] = [];
+    let cpfVerify: number[] = [];
+    let sum: number = 0;
+    let checkDigit: number;
+    let firstListSum = [10, 9, 8, 7, 6, 5, 4, 3, 2];
+    let secondListSum = [11, 10, 9, 8, 7, 6, 5, 4, 3, 2];
+
+
+    for(let i = 0; i < cpfList.length; i++){
+      cpfVerify[i] = parseInt(cpfList[i]);
+    }
+    
+    for(let i = 0; i < (cpfList.length - 2); i++){
+      cpfToNumber[i] = parseInt(cpfList[i]);
+      sum += firstListSum[i] * cpfToNumber[i];
+    }
+
+    checkDigit = sum % 11 < 2 ? 0 : 11 - (sum % 11);
+    cpfToNumber.push(checkDigit);
+    sum = 0;
+
+    for(let i = 0; i < (cpfList.length - 1); i++){
+      sum += secondListSum[i] * cpfToNumber[i];
+    }
+
+    checkDigit = sum % 11 < 2 ? 0 : 11 - (sum % 11);
+    cpfToNumber.push(checkDigit);
+    
+    for(let i = 0; i < cpf.length; i++){  
+      if(cpfToNumber[i] !== cpfVerify[i]) return false;
+    }
+
+    return true;
   }
 }
