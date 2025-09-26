@@ -15,7 +15,7 @@ export class UserService {
   constructor(
     @InjectRepository(UserEntity) private readonly userRepository: Repository<UserEntity>,
     @InjectRepository(PersonEntity) private readonly userPersonRepository: Repository<PersonEntity>,
-    @InjectRepository(InstituitionEntity) private readonly userIsntituitionRepository: Repository<InstituitionEntity>
+    @InjectRepository(InstituitionEntity) private readonly userInstituitionRepository: Repository<InstituitionEntity>
   ){}
   
   async create(createUser: CreateUserDTO) {
@@ -57,15 +57,12 @@ export class UserService {
         const createdPerson = await this.userPersonRepository.save(personEntity);           
         createdUser.person = createdPerson;
 
-        await this.userRepository.save(createdUser);
-
-        return{statusCode: 201, message: 'Usuário cadastrado com sucesso.'};
-              
+        await this.userRepository.save(createdUser);              
       }
 
       else if(createUser.userType === UserTypeEnum.INSTITUITION && createUser.instituition != null){
-        //  if(!this.validarCNPJ(createUser.instituition.cnpj))
-        //   throw new BadRequestException('CNPJ inválido.');
+        if(!this.validateCNPJ(createUser.instituition.cnpj))
+          throw new BadRequestException('CNPJ inválido.');
 
         if(await this.findByIdentifier(createUser.instituition.cnpj))
           throw new BadRequestException('CNPJ já cadastrado.');
@@ -73,16 +70,21 @@ export class UserService {
         const instituitionEntity:InstituitionEntity = new InstituitionEntity();
 
         instituitionEntity.cnpj = createUser.instituition.cnpj;
-        instituitionEntity.foundationDate = createUser.instituition.fundationDate;
-        createUser.instituition.segment ? instituitionEntity.segment = createUser.instituition.segment : null
+        instituitionEntity.foundationDate = createUser.instituition.foundationDate;
+        if(createUser.instituition.segment)
+          instituitionEntity.segment = createUser.instituition.segment;
 
-        const createdInstituition = await this.userPersonRepository.save(instituitionEntity);           
+        const createdInstituition = await this.userInstituitionRepository.save(instituitionEntity);           
         createdUser.instituition = createdInstituition;
 
         await this.userRepository.save(createdUser);
-
-        return{statusCode: 201, message: 'Usuário cadastrado com sucesso.'};
       }
+      else{
+        throw new BadRequestException('Tipo de usuário inválido.');
+      }
+
+      return{statusCode: 201, message: 'Usuário cadastrado com sucesso.'};
+
     } catch (erro) {
       
       if(erro instanceof BadRequestException)
@@ -106,7 +108,7 @@ export class UserService {
     if(userPerson) 
       user = await this.userRepository.findOneBy({id: userPerson.user.id})
   
-    let userIsntituitionRepository = await this.userIsntituitionRepository.findOne({where: {cnpj: parameter}})
+    let userIsntituitionRepository = await this.userInstituitionRepository.findOne({where: {cnpj: parameter}})
     if(userIsntituitionRepository) 
        user = await this.userRepository.findOneBy({id: userIsntituitionRepository.user.id})
     
@@ -134,9 +136,8 @@ export class UserService {
     let cpfVerify: number[] = [];
     let sum: number = 0;
     let checkDigit: number;
-    let firstListSum = [10, 9, 8, 7, 6, 5, 4, 3, 2];
-    let secondListSum = [11, 10, 9, 8, 7, 6, 5, 4, 3, 2];
-
+    let firstListToSum = [10, 9, 8, 7, 6, 5, 4, 3, 2];
+    let secondListToSum = [11, 10, 9, 8, 7, 6, 5, 4, 3, 2];
 
     for(let i = 0; i < cpfList.length; i++){
       cpfVerify[i] = parseInt(cpfList[i]);
@@ -144,7 +145,7 @@ export class UserService {
     
     for(let i = 0; i < (cpfList.length - 2); i++){
       cpfToNumber[i] = parseInt(cpfList[i]);
-      sum += firstListSum[i] * cpfToNumber[i];
+      sum += firstListToSum[i] * cpfToNumber[i];
     }
 
     checkDigit = sum % 11 < 2 ? 0 : 11 - (sum % 11);
@@ -152,7 +153,7 @@ export class UserService {
     sum = 0;
 
     for(let i = 0; i < (cpfList.length - 1); i++){
-      sum += secondListSum[i] * cpfToNumber[i];
+      sum += secondListToSum[i] * cpfToNumber[i];
     }
 
     checkDigit = sum % 11 < 2 ? 0 : 11 - (sum % 11);
@@ -163,5 +164,44 @@ export class UserService {
     }
 
     return true;
+  }
+
+  validateCNPJ(cnpj: string){
+    cnpj = cnpj.replace(/\D/g, '');
+    if(cnpj.length !== 14 || /^(\d)\1{13}$/.test(cnpj)) return false;
+
+    let cnpjLista = cnpj.split('');
+    let cnpjToNumber: number[] = [];
+    let cnpjVerify: number[] = [];  
+    let sum: number = 0;
+    let checkDigit:number;
+    let firstListToSum = [ 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
+    let secondListToSum = [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
+
+    for(let i = 0; i < cnpjLista.length; i++){
+      cnpjVerify[i] = parseInt(cnpjLista[i]);
+    }
+
+    for(let i = 0; i < (cnpjLista.length - 2); i++){
+      cnpjToNumber[i] = parseInt(cnpjLista[i]);
+      sum += firstListToSum[i] * cnpjToNumber[i];
+    }    
+
+    checkDigit = sum % 11 < 2 ? 0 : 11 - (sum % 11);
+    cnpjToNumber.push(checkDigit)
+    sum = 0;
+
+    for(let i = 0; i < (cnpjLista.length - 1); i++){
+      sum += secondListToSum[i] * cnpjToNumber[i];
+    }   
+
+    checkDigit = sum % 11 < 2 ? 0 : 11 - (sum % 11);
+    cnpjToNumber.push(checkDigit)
+
+    for(let i = 0; i < cnpjToNumber.length; i++){
+      if(cnpjToNumber[i] != cnpjVerify[i]) return false
+    }
+
+    return true
   }
 }

@@ -10,7 +10,7 @@ export class CreateInstituitionDTO {
     @IsDate({message:"DATA DE FUNDAÇÃO tem tipo inválido."})
     @MaxDate(new Date())
     @IsNotEmpty({message: "DATA DE FUNDAÇÃO não pode ser vazia."})
-    fundationDate: Date;
+    foundationDate: Date;
 
     @IsEnum(SegmentEnum, {message:"SEGMENTO não está predefinido."})
     @IsNotEmpty({message: "SEGMENTO não pode ser vazio."})
