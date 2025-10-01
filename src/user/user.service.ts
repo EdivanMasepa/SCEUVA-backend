@@ -28,7 +28,7 @@ export class UserService {
 
       if(createUser.password != createUser.confirmPassword)
         throw new BadRequestException('As senhas não conferem.');
-      
+       
       const senhaHasheada: string = await bcrypt.hash(createUser.password, 10);
     
       const userEntity:UserEntity = new UserEntity();
@@ -54,6 +54,9 @@ export class UserService {
         personEntity.gender = createUser.person.gender;
         personEntity.riskLevel = createUser.person.riskLevel;
 
+        const createdUser: UserEntity = await this.userRepository.save(userEntity);
+        personEntity.user = createdUser;
+
         const createdPerson = await this.userPersonRepository.save(personEntity);           
         createdUser.person = createdPerson;
 
@@ -74,6 +77,9 @@ export class UserService {
         if(createUser.instituition.segment)
           instituitionEntity.segment = createUser.instituition.segment;
 
+        const createdUser: UserEntity = await this.userRepository.save(userEntity);
+        instituitionEntity.user = createdUser;
+        
         const createdInstituition = await this.userInstituitionRepository.save(instituitionEntity);           
         createdUser.instituition = createdInstituition;
 
@@ -86,31 +92,36 @@ export class UserService {
       return{statusCode: 201, message: 'Usuário cadastrado com sucesso.'};
 
     } catch (erro) {
-      
+      console.log(erro)
       if(erro instanceof BadRequestException)
         throw erro;
       
-      throw new InternalServerErrorException('Erro interno. Verifique as informações e tente novamente.')
+      throw new InternalServerErrorException('Erro interno. Verifique os dados e tente novamente.')
     }
   }
 
-  async findByIdentifier(parameter: any): Promise<UserEntity | null>{
-    let user = await this.userRepository.findOneBy({id: parameter})
-    if(user) return user;
+  async findByIdentifier(parameter: any): Promise<UserEntity | null>{ console.log(parameter, 'oi')
+    if(typeof parameter === 'number'){
+      let user = await this.userRepository.findOneBy({id: parameter})
+      if(user) return user;
 
-    user = await this.userRepository.findOne({where: {email: parameter}})
-    if(user) return user;
+    } else if (typeof parameter === 'string'){
+      let user = await this.userRepository.findOne({where: {email: parameter}})
+      if(user) return user;
 
-    user = await this.userRepository.findOne({where: {phone: parameter}})
-    if(user) return user;
+      user = await this.userRepository.findOne({where: {phone: parameter}})
+      if(user) return user;
 
-    let userPerson = await this.userPersonRepository.findOne({where: {cpf: parameter}})
-    if(userPerson) 
-      user = await this.userRepository.findOneBy({id: userPerson.user.id})
-  
-    let userIsntituitionRepository = await this.userInstituitionRepository.findOne({where: {cnpj: parameter}})
-    if(userIsntituitionRepository) 
-       user = await this.userRepository.findOneBy({id: userIsntituitionRepository.user.id})
+      let userPerson = await this.userPersonRepository.findOne({where: {cpf: parameter}})
+      if(userPerson) 
+        user = await this.userRepository.findOneBy({id: userPerson.user.id})
+    
+      let userIsntituitionRepository = await this.userInstituitionRepository.findOne({where: {cnpj: parameter}})
+      if(userIsntituitionRepository) 
+        user = await this.userRepository.findOneBy({id: userIsntituitionRepository.user.id})
+      
+      if(user) return user;
+    }
     
     return null;
   }

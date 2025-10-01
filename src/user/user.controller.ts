@@ -2,7 +2,7 @@ import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/commo
 import { UserService } from './user.service';
 import { CreateUserDTO } from './dto/create-user.dto';
 import { UpdateUserDTO } from './dto/update-user.dto';
-import { ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiBadRequestResponse, ApiInternalServerErrorResponse, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { ListUserDTO } from './dto/list-user.dto';
 
 @Controller('user')
@@ -10,7 +10,10 @@ export class UserController {
   constructor(private readonly userService: UserService) {}
 
   @Post()
-  @ApiResponse({status: 201, description: 'Registro criado com sucesso.'})
+  @ApiResponse({status: 201, description: 'Usuário cadastrado com sucesso.'})
+  @ApiBadRequestResponse({ description: 'Erro de validação, verifique os dados e tente novamente.'})
+  @ApiInternalServerErrorResponse({ description: 'Erro interno. Verifique os dados e tente novamente.'})
+
   create(@Body() createUserDto: CreateUserDTO) {
     return this.userService.create(createUserDto);
   }
