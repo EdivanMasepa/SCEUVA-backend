@@ -126,6 +126,22 @@ export class UserService {
     return null;
   }
 
+  async setRefreshToken(hashedToken: string, userId: number){
+    try{
+      await this.userRepository.update(userId, {hashedRefreshToken: hashedToken})
+    }catch(erro){
+      throw new InternalServerErrorException('Erro interno ao atualizar o token de autenticação.')
+    }
+  }
+
+  async removeRefreshToken(userId: number){
+    try{
+      await this.userRepository.update(userId, {hashedRefreshToken: null})
+    }catch(erro){
+      throw new InternalServerErrorException('Erro interno ao atualizar o token de autenticação.')
+    }
+  }
+
   findAll() {
     return `This action returns all user`;
   }

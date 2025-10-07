@@ -27,8 +27,8 @@ export class UserEntity {
     @Column({name: 'moderador', type: 'boolean', default: false})
     moderator: boolean;
 
-    @Column({ nullable: true })
-    hashedRefreshToken?: string;
+    @Column({ type: 'text', nullable: true })
+    hashedRefreshToken?: string | null;
 
     @OneToOne(() => PersonEntity, person => person.user, {nullable:true, eager: true})
     person: PersonEntity;
