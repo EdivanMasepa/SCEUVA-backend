@@ -1,9 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable } from '@nestjs/common';
 import { CreateAuthDto } from './dto/create-auth.dto';
 import { UpdateAuthDto } from './dto/update-auth.dto';
 import { UserService } from 'src/user/user.service';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class AuthService {
@@ -14,7 +15,18 @@ export class AuthService {
     private configService: ConfigService,
   ){}
 
-  async getToken(payload: {sub: number; login: string}){
+  async validateLoginUser(login: string, password: string){
+    const user = await this.userService.findByIdentifier(login);
+    if(!user) return null;
+
+    const match = await bcrypt.compare(password, user.password);
+    if(!match) return null;
+
+    const {password: _p, ...rest } = user as any; 
+    return rest;
+  }
+
+  async getTokens(payload: {sub: number; login: string}){
     
     const acessToken = await this.jwtService.signAsync(
       {sub: payload.sub, login: payload.login},
@@ -33,6 +45,35 @@ export class AuthService {
     )
     return {acessToken, refreshToken};
   }
+
+  async login(user: any){
+    const tokens = await this.getTokens({sub: user.id, login: user.login});
+    const hashedRefresh = await bcrypt.hash(tokens.refreshToken, 10);
+
+    await this.userService.setRefreshToken(hashedRefresh, user.id);
+
+    return tokens;
+  }
+
+  async refreshTokens(userId: number, refreshToken: string){
+    const user = await this.userService.findByIdentifier(userId);
+    if(!user || !user.hashedRefreshToken) throw new ForbiddenException("Acesso não autorizado.");
+    
+    const isMatch = await bcrypt.compare(refreshToken, user.hashedRefreshToken);
+    if(!isMatch) throw new ForbiddenException("Acesso não autorizado.");
+
+    const tokens = await this.getTokens({sub: user.id, login: user.email});
+    const hashed = await bcrypt.hash(tokens.refreshToken, 10);
+
+    await this.userService.setRefreshToken(hashed, user.id);
+
+    return tokens;
+  }
+
+  async logout(userId: number){
+    await this.userService.removeRefreshToken(userId);
+  }
+
   create(createAuthDto: CreateAuthDto) {
     return 'This action adds a new auth';
   }
