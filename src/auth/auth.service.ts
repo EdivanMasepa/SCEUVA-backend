@@ -1,4 +1,4 @@
-import { ForbiddenException, Injectable } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, InternalServerErrorException } from '@nestjs/common';
 import { CreateAuthDto } from './dto/create-auth.dto';
 import { UpdateAuthDto } from './dto/update-auth.dto';
 import { UserService } from 'src/user/user.service';
@@ -16,14 +16,23 @@ export class AuthService {
   ){}
 
   async validateLoginUser(login: string, password: string){
-    const user = await this.userService.findByIdentifier(login);
-    if(!user) return null;
+    try {
+      const user = await this.userService.findByIdentifier(login);
+      const match = user ? await bcrypt.compare(password, user.password) : null;
+      
+      if(!user || match == null) 
+        throw new BadRequestException("Credenciais inválidas.");
 
-    const match = await bcrypt.compare(password, user.password);
-    if(!match) return null;
+      const {password: _p, ...rest } = user as any; 
+      return rest;
 
-    const {password: _p, ...rest } = user as any; 
-    return rest;
+    } catch (erro) {
+      if(erro instanceof BadRequestException)
+        throw erro
+
+      throw new InternalServerErrorException("Erro interno, verifique os dados e tente novamente.")
+    }
+   
   }
 
   async getTokens(payload: {sub: number; login: string}){
@@ -47,12 +56,25 @@ export class AuthService {
   }
 
   async login(user: any){
-    const tokens = await this.getTokens({sub: user.id, login: user.login});
-    const hashedRefresh = await bcrypt.hash(tokens.refreshToken, 10);
+    try {
+      const tokens = await this.getTokens({sub: user.id, login: user.login});
+      
+      if(!tokens) 
+        throw new BadRequestException("Credenciais inválidas.");
+      
+      const hashedRefresh = await bcrypt.hash(tokens.refreshToken, 10);
 
-    await this.userService.setRefreshToken(hashedRefresh, user.id);
+      await this.userService.setRefreshToken(hashedRefresh, user.id);
 
-    return tokens;
+      return tokens;
+
+    } catch (erro) {
+      if(erro instanceof BadRequestException)
+        throw erro
+
+      throw new InternalServerErrorException("Erro interno, verifique os dados e tente novamente.")
+    }
+
   }
 
   async refreshTokens(userId: number, refreshToken: string){
