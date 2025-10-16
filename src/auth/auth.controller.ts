@@ -1,16 +1,29 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Res } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { CreateAuthDto } from './dto/create-auth.dto';
 import { UpdateAuthDto } from './dto/update-auth.dto';
 import { LoginDto } from './dto/login.dto';
+import { ApiBadRequestResponse, ApiInternalServerErrorResponse, ApiResponse } from '@nestjs/swagger';
+import express from 'express';
 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post()
-  login(@Body() loginDto: LoginDto) {
-    return this.authService.create(loginDto);
+  @ApiResponse({status: 200, description: 'acessToken: string, refreshToken: string.'})
+  @ApiBadRequestResponse({ description: 'Credenciais inválidas.'})
+  @ApiBadRequestResponse({ description: 'Falha ao gerar tokensd e autenticação.'})
+  @ApiInternalServerErrorResponse({ description: 'Erro interno. Verifique os dados e tente novamente.'})
+  @ApiInternalServerErrorResponse({ description: 'Erro ao gerar tokens de autenticação.'})
+  async login(@Body() loginDto: LoginDto, @Res({passthrough: true}) res: express.Response): Promise<{accessToken: string}> {
+    const tokens = await this.authService.login(loginDto);
+    res.cookie('refreshToken', tokens.refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge:  7 * 24 * 60 * 60 * 1000
+    }) 
+     return {accessToken: tokens.accessToken};
   }
 
   @Get()

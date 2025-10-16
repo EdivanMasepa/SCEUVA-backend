@@ -5,6 +5,7 @@ import { UserService } from 'src/user/user.service';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
+import { LoginDto } from './dto/login.dto';
 
 @Injectable()
 export class AuthService {
@@ -21,7 +22,7 @@ export class AuthService {
       const match = user ? await bcrypt.compare(password, user.password) : null;
       
       if(!user || match == null) 
-        throw new BadRequestException("Credenciais inválidas.");
+        throw new BadRequestException('Credenciais inválidas.');
 
       const {password: _p, ...rest } = user as any; 
       return rest;
@@ -30,40 +31,43 @@ export class AuthService {
       if(erro instanceof BadRequestException)
         throw erro
 
-      throw new InternalServerErrorException("Erro interno, verifique os dados e tente novamente.")
+      throw new InternalServerErrorException('Erro interno, verifique os dados e tente novamente.')
     }
-   
   }
 
   async getTokens(payload: {sub: number; login: string}){
-    
-    const acessToken = await this.jwtService.signAsync(
-      {sub: payload.sub, login: payload.login},
-      {
-        secret: this.configService.get<string>('JWT_SECRET'),
-        expiresIn: this.configService.get<string>('JWT_EXPIRES_IN')
-      }
-    )
-    
-    const refreshToken = await this.jwtService.signAsync(
-      {sub: payload.sub, login: payload.login},
-      {
-        secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
-        expiresIn: this.configService.get<string>('JWT_REFRESH_EXPIRES_IN'),
-      }
-    )
-    return {acessToken, refreshToken};
+    try {
+      const accessToken = await this.jwtService.signAsync(
+        {sub: payload.sub, login: payload.login},
+        {
+          secret: this.configService.get<string>('JWT_SECRET'),
+          expiresIn: this.configService.get<string>('JWT_EXPIRES_IN')
+        }
+      )
+      
+      const refreshToken = await this.jwtService.signAsync(
+        {sub: payload.sub, login: payload.login},
+        {
+          secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
+          expiresIn: this.configService.get<string>('JWT_REFRESH_EXPIRES_IN'),
+        }
+      )
+
+      return {accessToken, refreshToken};
+    } catch (erro) {
+      throw new InternalServerErrorException('Erro ao gerar tokens de autenticação.')
+    }
   }
 
-  async login(user: any){
+  async login(loginDto: LoginDto): Promise<{accessToken: string, refreshToken: string}>{
     try {
+      const user = await this.validateLoginUser(loginDto.login, loginDto.password);
       const tokens = await this.getTokens({sub: user.id, login: user.login});
       
       if(!tokens) 
-        throw new BadRequestException("Credenciais inválidas.");
+        throw new BadRequestException('Falha ao gerar tokens de autenticação.');
       
       const hashedRefresh = await bcrypt.hash(tokens.refreshToken, 10);
-
       await this.userService.setRefreshToken(hashedRefresh, user.id);
 
       return tokens;
@@ -72,17 +76,16 @@ export class AuthService {
       if(erro instanceof BadRequestException)
         throw erro
 
-      throw new InternalServerErrorException("Erro interno, verifique os dados e tente novamente.")
+      throw new InternalServerErrorException('Erro interno, verifique os dados e tente novamente.')
     }
-
   }
 
   async refreshTokens(userId: number, refreshToken: string){
     const user = await this.userService.findByIdentifier(userId);
-    if(!user || !user.hashedRefreshToken) throw new ForbiddenException("Acesso não autorizado.");
+    if(!user || !user.hashedRefreshToken) throw new ForbiddenException('Acesso não autorizado.');
     
     const isMatch = await bcrypt.compare(refreshToken, user.hashedRefreshToken);
-    if(!isMatch) throw new ForbiddenException("Acesso não autorizado.");
+    if(!isMatch) throw new ForbiddenException('Acesso não autorizado.');
 
     const tokens = await this.getTokens({sub: user.id, login: user.email});
     const hashed = await bcrypt.hash(tokens.refreshToken, 10);
