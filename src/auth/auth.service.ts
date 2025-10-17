@@ -1,11 +1,11 @@
-import { BadRequestException, ForbiddenException, Injectable, InternalServerErrorException } from '@nestjs/common';
-import { CreateAuthDto } from './dto/create-auth.dto';
-import { UpdateAuthDto } from './dto/update-auth.dto';
+import { BadRequestException, ForbiddenException, HttpException, Injectable, InternalServerErrorException } from '@nestjs/common';
 import { UserService } from 'src/user/user.service';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
 import { LoginDto } from './dto/login.dto';
+import { Request } from 'express';
+
 
 @Injectable()
 export class AuthService {
@@ -13,7 +13,7 @@ export class AuthService {
   constructor(
     private userService: UserService,
     private jwtService: JwtService,
-    private configService: ConfigService,
+    private configService: ConfigService
   ){}
 
   async validateLoginUser(login: string, password: string){
@@ -80,42 +80,39 @@ export class AuthService {
     }
   }
 
-  async refreshTokens(userId: number, refreshToken: string){
-    const user = await this.userService.findByIdentifier(userId);
-    if(!user || !user.hashedRefreshToken) throw new ForbiddenException('Acesso não autorizado.');
-    
-    const isMatch = await bcrypt.compare(refreshToken, user.hashedRefreshToken);
-    if(!isMatch) throw new ForbiddenException('Acesso não autorizado.');
+  async refreshTokens(req: Request){
+    try {
+      const refreshToken = req.cookies?.refreshToken || (req.body && req.body.refreshToken); 
+      if (!refreshToken) 
+        throw new BadRequestException('Refresh token não informado.');
 
-    const tokens = await this.getTokens({sub: user.id, login: user.email});
-    const hashed = await bcrypt.hash(tokens.refreshToken, 10);
+      const payload: any = this.jwtService.decode(refreshToken);
+      if (!payload?.sub)
+        throw new ForbiddenException('Token inválido.');
 
-    await this.userService.setRefreshToken(hashed, user.id);
+      const user = await this.userService.findByIdentifier(payload.sub);
+      if(!user || !user.hashedRefreshToken) 
+        throw new ForbiddenException('Acesso não autorizado.');
+      
+      const isMatch = await bcrypt.compare(refreshToken, user.hashedRefreshToken);
+      if(!isMatch) 
+        throw new ForbiddenException('Acesso não autorizado.');
 
-    return tokens;
+      const tokens = await this.getTokens({sub: user.id, login: user.email});
+      const hashed = await bcrypt.hash(tokens.refreshToken, 10);
+
+      await this.userService.setRefreshToken(hashed, user.id);
+
+      return tokens;
+    } catch (erro) {      
+      if (erro instanceof HttpException) 
+        throw erro;
+
+      throw new InternalServerErrorException('Erro ao atualizar token.'); 
+    }
   }
 
   async logout(userId: number){
     await this.userService.removeRefreshToken(userId);
-  }
-
-  create(createAuthDto: CreateAuthDto) {
-    return 'This action adds a new auth';
-  }
-
-  findAll() {
-    return `This action returns all auth`;
-  }
-
-  findOne(id: number) {
-    return `This action returns a #${id} auth`;
-  }
-
-  update(id: number, updateAuthDto: UpdateAuthDto) {
-    return `This action updates a #${id} auth`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} auth`;
   }
 }
