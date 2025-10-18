@@ -6,7 +6,6 @@ import * as bcrypt from 'bcrypt';
 import { LoginDto } from './dto/login.dto';
 import { Request } from 'express';
 
-
 @Injectable()
 export class AuthService {
 
@@ -113,6 +112,10 @@ export class AuthService {
   }
 
   async logout(userId: number){
-    await this.userService.removeRefreshToken(userId);
+    try {
+      await this.userService.removeRefreshToken(userId);
+    } catch (error) {
+      throw new InternalServerErrorException('Erro ao remover token.')
+    }
   }
 }
