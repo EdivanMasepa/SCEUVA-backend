@@ -1,4 +1,4 @@
-import { BadRequestException, ForbiddenException, HttpException, Injectable, InternalServerErrorException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, HttpException, Injectable, InternalServerErrorException, UnauthorizedException } from '@nestjs/common';
 import { UserService } from 'src/user/user.service';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
@@ -113,8 +113,15 @@ export class AuthService {
 
   async logout(userId: number){
     try {
+      if(!userId)
+        throw new UnauthorizedException('Usuário não autenticado.');
+      
       await this.userService.removeRefreshToken(userId);
-    } catch (error) {
+      
+    } catch (erro) {
+      if(erro instanceof UnauthorizedException)
+        throw erro;
+
       throw new InternalServerErrorException('Erro ao remover token.')
     }
   }

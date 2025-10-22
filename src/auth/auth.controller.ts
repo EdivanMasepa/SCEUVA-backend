@@ -1,8 +1,9 @@
-import { Controller, Post, Body, Res, Req, UnauthorizedException } from '@nestjs/common';
+import { Controller, Post, Body, Res, Req, UnauthorizedException, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import type { Request, Response} from 'express';
 import { ApiResponses } from 'src/shared/swagger.decorators';
+import { AuthGuard } from '@nestjs/passport';
 
 @Controller('auth')
 export class AuthController {
@@ -28,6 +29,7 @@ export class AuthController {
   }
 
   @Post('refresh')
+  @UseGuards(AuthGuard('jwt'))
   @ApiResponses([
     { status: 200, description: 'accessToken: string'},
     { status: 400, description: 'Refresh token não informado.' },
@@ -48,6 +50,7 @@ export class AuthController {
   }
 
   @Post('logout')
+  @UseGuards(AuthGuard('jwt'))
    @ApiResponses([
     { status: 200, description: 'Logout realizado com sucesso.'},
     { status: 401, description: 'Usuário não autenticado.' },
@@ -55,10 +58,6 @@ export class AuthController {
   ])
   async logout(@Req() req: Request, @Res({passthrough: true}) res: Response){
     const userId = (req as any).user?.id;
-
-    if(!userId)
-      throw new UnauthorizedException('Usuário não autenticado.');
-
     await this.authService.logout(userId);
 
     res.clearCookie(
