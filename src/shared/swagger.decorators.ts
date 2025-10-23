@@ -3,11 +3,16 @@ import { ApiResponse, ApiBadRequestResponse, ApiInternalServerErrorResponse, Api
 
 interface ApiResponseItem {
   status: number;
-  description: string;
+  description?: string;
+  type?: any;
 }
 
 export function ApiResponses(responses: ApiResponseItem[]) {
-  const decorators = responses.map(({ status, description }) => {
+  const decorators = responses.map(({ status, description, type }) => {
+    const baseOptions : any = {description};
+    if(type)
+      baseOptions.type = type;
+
     switch (status) {
       case 400:
         return ApiBadRequestResponse({ description });
@@ -20,7 +25,7 @@ export function ApiResponses(responses: ApiResponseItem[]) {
       case 500:
         return ApiInternalServerErrorResponse({ description });
       default:
-        return ApiResponse({ status, description });
+        return ApiResponse({ status, ...baseOptions });
     }
   });
 

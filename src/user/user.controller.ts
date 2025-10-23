@@ -1,25 +1,28 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDTO } from './dto/create-user.dto';
 import { UpdateUserDTO } from './dto/update-user.dto';
-import { ApiBadRequestResponse, ApiInternalServerErrorResponse, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { ListUserDTO } from './dto/list-user.dto';
+import { AuthGuard } from '@nestjs/passport';
+import { ApiResponses } from 'src/shared/swagger.decorators';
 
 @Controller('user')
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
   @Post()
-  @ApiResponse({status: 201, description: 'Usuário cadastrado com sucesso.'})
-  @ApiBadRequestResponse({ description: 'Erro de validação, verifique os dados e tente novamente.'})
-  @ApiInternalServerErrorResponse({ description: 'Erro interno. Verifique os dados e tente novamente.'})
-
+  @ApiResponses([
+    { status: 201, description: 'Usuário cadastrado com sucesso.'},
+    { status: 400, description: 'Erro de validação, verifique os dados e tente novamente.'},
+    { status: 500, description: 'Erro interno. Verifique os dados e tente novamente.'}
+  ])
   create(@Body() createUserDto: CreateUserDTO) {
     return this.userService.create(createUserDto);
   }
 
   @Get()
-  @ApiResponse({status: 200, type: ListUserDTO})
+  @UseGuards(AuthGuard('jwt'))
+  @ApiResponses([{status: 200, type: ListUserDTO}])
   findAll() {
     return this.userService.findAll();
   }
