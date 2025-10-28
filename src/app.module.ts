@@ -4,6 +4,7 @@ import { ConfigModule } from '@nestjs/config';
 import { UserModule } from './user/user.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { SwaggerModule } from '@nestjs/swagger';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [ConfigModule.forRoot({isGlobal: true}), TypeOrmModule.forRoot({
@@ -16,7 +17,7 @@ import { SwaggerModule } from '@nestjs/swagger';
       entities: [__dirname + '/**/*.entity{.ts,.js}'],
       synchronize: true
     }), 
-    //AuthModule, 
+    AuthModule, 
     UserModule,
     SwaggerModule],
   controllers: [],

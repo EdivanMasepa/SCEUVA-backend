@@ -5,6 +5,7 @@ import { UpdateUserDTO } from './dto/update-user.dto';
 import { ListUserDTO } from './dto/list-user.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiResponses } from 'src/shared/swagger.decorators';
+import { ApiBearerAuth } from '@nestjs/swagger';
 
 @Controller('user')
 export class UserController {
@@ -21,6 +22,7 @@ export class UserController {
   }
 
   @Get()
+  @ApiBearerAuth()
   @UseGuards(AuthGuard('jwt'))
   @ApiResponses([{status: 200, type: ListUserDTO}])
   findAll() {
@@ -28,6 +30,8 @@ export class UserController {
   }
 
   @Get(':id')
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard('jwt'))
   findOne(@Param('id') id: string) {
     return this.userService.findByIdentifier(+id);
   }

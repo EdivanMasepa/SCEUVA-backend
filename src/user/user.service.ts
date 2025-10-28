@@ -92,7 +92,6 @@ export class UserService {
       return{statusCode: 201, message: 'Usuário cadastrado com sucesso.'};
 
     } catch (erro) {
-      console.log(erro)
       if(erro instanceof BadRequestException)
         throw erro;
       
@@ -100,7 +99,7 @@ export class UserService {
     }
   }
 
-  async findByIdentifier(parameter: any): Promise<UserEntity | null>{ console.log(parameter, 'oi')
+  async findByIdentifier(parameter: any): Promise<UserEntity | null>{
     if(typeof parameter === 'number'){
       let user = await this.userRepository.findOneBy({id: parameter})
       if(user) return user;
