@@ -11,7 +11,7 @@ export class AuthController {
 
   @Post('login')
   @ApiResponses([
-    { status: 200, description: 'acessToken: string.'},
+    { status: 200, description: 'accessToken: string.'},
     { status: 400, description: 'Credenciais inválidas.'},
     { status: 400, description: 'Falha ao gerar tokensd e autenticação.'},
     { status: 500, description: 'Erro interno. Verifique os dados e tente novamente.'},

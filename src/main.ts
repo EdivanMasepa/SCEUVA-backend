@@ -9,6 +9,7 @@ declare global {
 }
 
 async function bootstrap() {
+  console.log('oi');
   
   const app = await NestFactory.create(AppModule);
 
@@ -24,32 +25,46 @@ async function bootstrap() {
         in: 'header',
         name: 'Authorization'
       },
-      'acessToken'
+      'accessToken'
     )
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
   
-  SwaggerModule.setup('api', app, document, {
+  SwaggerModule.setup('api', app, document, { 
     swaggerOptions:{
       persistAuthorization: true,
-      requestInterceptor: (req) => {
-        if(req.url.endsWith('/auth/login') && req.method === 'POST')
-          req.onSucess = (response) => {
-            try{
-              const data = JSON.parse(response.text);
-              const token = data.acessToken;
+      responseInterceptor: (response) => {
+        try{
+          const url = response.url || '';
 
-              if(token)
-                window.ui.preauthorizeApiKey('acessToken', 'Bearer' + token)
-            }catch(erro){
-              console.error('Falha ao aplicar token automaticamente', erro)
+          if(url.endsWith('/auth/login')){
+            const data = JSON.parse(response.text);
+            const token = data.accessToken;
+            
+            // if(token && window.ui){
+            //   window.ui.preauthorizeApiKey('accessToken', `Bearer ${token}`);
+            //   console.log('Token aplicado automaticamente no Swagger.', `Bearer ${token}`, window.ui);
+            // }
+
+            if (token) {
+              setTimeout(() => {
+                if (window?.ui) {
+                  window.ui.preauthorizeApiKey('accessToken', `Bearer ${token}`);
+                  console.log('Token aplicado automaticamente.');
+                } else {
+                  console.warn('window.ui ainda não disponível.');
+                }
+              }, 500); // dá tempo do Swagger inicializar
             }
-          };
-          return req;
+          }
+          
+        }catch(erro){
+          console.error('Falha ao aplicar token automaticamente', erro)
+        }
       }
     }
-  });
+  }); 
 
   await app.listen(process.env.PORT ?? 3000);
 }
