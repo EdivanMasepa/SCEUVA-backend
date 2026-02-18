@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, InternalServerErrorException } from '@nestjs/common';
+import { BadRequestException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { CreateUserDTO } from './dto/create-user.dto';
 import { UpdateUserDTO } from './dto/update-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -8,6 +8,8 @@ import { InstituitionEntity } from './entities/instituition.entity';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { UserTypeEnum } from 'src/shared/enums/user-type.enums';
+import { ListUserDTO } from './dto/list-user.dto';
+import { plainToInstance } from 'class-transformer';
 
 @Injectable()
 export class UserService {
@@ -32,7 +34,7 @@ export class UserService {
       const senhaHasheada: string = await bcrypt.hash(createUser.password, 10);
     
       const userEntity:UserEntity = new UserEntity();
-      userEntity.typeUser = createUser.userType,
+      userEntity.userType = createUser.userType,
       userEntity.name = createUser.name;
       userEntity.email = createUser.email;
       userEntity.phone = createUser.phone;
@@ -141,8 +143,47 @@ export class UserService {
     }
   }
 
-  findAll() {
-    return `This action returns all user`;
+  async findAll(filter?: { userType?: UserTypeEnum, moderator?: boolean, name?: string}, pagination?: {page?: number, limit?: number}): Promise<[ListUserDTO[], number]> {
+    try {
+      const page = pagination?.page && pagination?.page > 0 ? pagination?.page : 1;
+      const limit = pagination?.limit ?? 10;
+
+      const queryBuilder = this.userRepository
+        .createQueryBuilder('user')
+        .leftJoinAndSelect('user.person', 'person')
+        .leftJoinAndSelect('user.instituition', 'instituition')
+        .select([
+          'user.id', 'user.userType',  'user.name', 'user.email', 'user.phone', 'user.moderator',
+          'person.birthDate', 'person.gender', 'person.riskLevel',
+          'instituition.cnpj', 'instituition.foundationDate', 'instituition.segment'
+        ])
+        .skip((page - 1 ) * limit )
+        .take(limit)
+        .orderBy('user.name', 'ASC')
+
+      if(filter?.userType != null)
+        queryBuilder.andWhere('user.userType = :userType', {userType: filter?.userType});
+
+      if(typeof filter?.moderator === 'boolean')
+        queryBuilder.andWhere('user.moderator = :moderator', {moderator: filter?.moderator});
+
+      if(filter?.name?.trim())
+        queryBuilder.andWhere("user.name ilike :name", {name: `%${filter?.name}%`});
+
+      const [users, count] = await queryBuilder.getManyAndCount();
+      
+      const dtos = users.map(user => 
+        plainToInstance(ListUserDTO, user, {excludeExtraneousValues: true})
+      )
+
+      return [dtos, count];
+
+    } catch (erro) {
+
+      console.log(erro);
+      
+      throw new InternalServerErrorException('Erro interno. Verifique os dados e tente novamente.')
+    }
   }
 
   update(id: number, updateUserDto: UpdateUserDTO) {
