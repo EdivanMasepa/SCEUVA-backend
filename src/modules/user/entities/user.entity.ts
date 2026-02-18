@@ -1,5 +1,5 @@
 import { Column, Entity, OneToOne, PrimaryGeneratedColumn } from "typeorm";
-import { UserTypeEnum } from "../../shared/enums/user-type.enums";
+import { UserTypeEnum } from "../../../shared/enums/user-type.enums";
 import { PersonEntity } from "./person.entity";
 import { InstituitionEntity } from "./instituition.entity";
 
@@ -10,7 +10,7 @@ export class UserEntity {
     id:number;
 
     @Column({name:'tipo_usuario', type: 'enum', enum: UserTypeEnum, nullable:false})
-    typeUser:UserTypeEnum;
+    userType:UserTypeEnum;
     
     @Column({name: 'nome', type: 'varchar', nullable:false})
     name: string;

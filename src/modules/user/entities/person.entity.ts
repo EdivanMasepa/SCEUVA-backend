@@ -1,6 +1,6 @@
 import { Column, Entity, JoinColumn, OneToOne, PrimaryGeneratedColumn } from "typeorm";
-import { GenderEnum } from "../../shared/enums/gender.enum";
-import { RiskLevelEnum } from "../../shared/enums/risk-level.enum";
+import { GenderEnum } from "../../../shared/enums/gender.enum";
+import { RiskLevelEnum } from "../../../shared/enums/risk-level.enum";
 import { UserEntity } from "./user.entity";
 
 @Entity({name:'pessoa'})

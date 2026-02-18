@@ -1,5 +1,5 @@
 import { Column, Entity, JoinColumn, OneToOne, PrimaryGeneratedColumn } from "typeorm";
-import { SegmentEnum } from "../../shared/enums/segment.enum";
+import { SegmentEnum } from "../../../shared/enums/segment.enum";
 import { UserEntity } from "./user.entity";
 
 @Entity({name:'instituicao'})
