@@ -7,8 +7,8 @@ import { RiskLevelEnum } from "src/shared/enums/risk-level.enum";
 export class CreatePersonDTO {
   
     @ApiProperty()
-    @IsString({message: "CPF tem tipo inválido."})
     @IsNotEmpty({ message: "CPF não pode ser vazio."})
+    @IsString({message: "CPF tem tipo inválido."})
     cpf: string;
   
     @ApiProperty()

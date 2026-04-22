@@ -1,6 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { ValidationPipe, BadRequestException } from '@nestjs/common';
 
 function setupSwagger(app: any) {
   const config = new DocumentBuilder()
@@ -115,6 +116,23 @@ function setupSwagger(app: any) {
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+ 
+  app.useGlobalPipes(new ValidationPipe({
+  whitelist: true,
+  transform: true,
+  exceptionFactory: (errors) => {
+    const flatten = (errs) =>
+      errs.flatMap(err => {
+        const msgs = Object.values(err.constraints || {});
+        if (err.children && err.children.length) {
+          return err.children.flatMap(child => Object.values(child.constraints || {}));
+        }
+        return msgs;
+      });
+    const messages = flatten(errors);
+    return new BadRequestException({ message: messages, error: 'Bad Request', statusCode: 400 });
+  }
+}));
 
   setupSwagger(app);
 

@@ -5,7 +5,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { UserEntity } from './entities/user.entity';
 import { PersonEntity } from './entities/person.entity';
 import { InstituitionEntity } from './entities/instituition.entity';
-import { Repository } from 'typeorm';
+import { Repository, DataSource } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { UserTypeEnum } from 'src/shared/enums/user-type.enums';
 import { ListUserDTO } from './dto/list-user.dto';
@@ -17,87 +17,93 @@ export class UserService {
   constructor(
     @InjectRepository(UserEntity) private readonly userRepository: Repository<UserEntity>,
     @InjectRepository(PersonEntity) private readonly userPersonRepository: Repository<PersonEntity>,
-    @InjectRepository(InstituitionEntity) private readonly userInstituitionRepository: Repository<InstituitionEntity>
+    @InjectRepository(InstituitionEntity) private readonly userInstituitionRepository: Repository<InstituitionEntity>,
+    private readonly dataSource: DataSource
   ){}
   
   async create(createUser: CreateUserDTO) {
-    try {
-      if(await this.findByIdentifier(createUser.phone))
-        throw new BadRequestException('Número de telefone já cadastrado.');
-      
-      if(createUser.email && await this.findByIdentifier(createUser.email))
-        throw new BadRequestException('E-mail já cadastrado.');
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
 
+    try {
       if(createUser.password != createUser.confirmPassword)
         throw new BadRequestException('As senhas não conferem.');
-       
+
       const senhaHasheada: string = await bcrypt.hash(createUser.password, 10);
-    
-      const userEntity:UserEntity = new UserEntity();
-      userEntity.userType = createUser.userType,
+
+      // checar duplicados usando o manager da transação
+      if (createUser.phone) {
+        const existsPhone = await queryRunner.manager.findOne(UserEntity, { where: { phone: createUser.phone } });
+        if (existsPhone) throw new BadRequestException('Número de telefone já cadastrado.');
+      }
+
+      if (createUser.email) {
+        const existsEmail = await queryRunner.manager.findOne(UserEntity, { where: { email: createUser.email } });
+        if (existsEmail) throw new BadRequestException('E-mail já cadastrado.');
+      }
+
+      const userEntity: UserEntity = new UserEntity();
+      userEntity.userType = createUser.userType;
       userEntity.name = createUser.name;
       userEntity.email = createUser.email;
       userEntity.phone = createUser.phone;
       userEntity.password = senhaHasheada;
 
-      const createdUser: UserEntity = await this.userRepository.save(userEntity);
+      const createdUser: UserEntity = await queryRunner.manager.save(UserEntity, userEntity);
 
       if(createUser.userType === UserTypeEnum.PERSON && createUser.person != null){
         if(!this.validateCPF(createUser.person.cpf))
            throw new BadRequestException('CPF inválido.');
 
-        if(await this.findByIdentifier(createUser.person.cpf))
-          throw new BadRequestException('CPF já cadastrado.');
+        const existsCpf = await queryRunner.manager.findOne(PersonEntity, { where: { cpf: createUser.person.cpf } });
+        if (existsCpf) throw new BadRequestException('CPF já cadastrado.');
 
         const personEntity: PersonEntity = new PersonEntity();
-
         personEntity.cpf = createUser.person.cpf;
         personEntity.birthDate = createUser.person.birthDate;
         personEntity.gender = createUser.person.gender;
         personEntity.riskLevel = createUser.person.riskLevel;
-
-        const createdUser: UserEntity = await this.userRepository.save(userEntity);
         personEntity.user = createdUser;
 
-        const createdPerson = await this.userPersonRepository.save(personEntity);           
+        const createdPerson = await queryRunner.manager.save(PersonEntity, personEntity);
         createdUser.person = createdPerson;
-
-        await this.userRepository.save(createdUser);              
+        await queryRunner.manager.save(UserEntity, createdUser);
       }
-
       else if(createUser.userType === UserTypeEnum.INSTITUITION && createUser.instituition != null){
         if(!this.validateCNPJ(createUser.instituition.cnpj))
           throw new BadRequestException('CNPJ inválido.');
 
-        if(await this.findByIdentifier(createUser.instituition.cnpj))
-          throw new BadRequestException('CNPJ já cadastrado.');
+        const existsCnpj = await queryRunner.manager.findOne(InstituitionEntity, { where: { cnpj: createUser.instituition.cnpj } });
+        if (existsCnpj) throw new BadRequestException('CNPJ já cadastrado.');
 
-        const instituitionEntity:InstituitionEntity = new InstituitionEntity();
-
+        const instituitionEntity: InstituitionEntity = new InstituitionEntity();
         instituitionEntity.cnpj = createUser.instituition.cnpj;
         instituitionEntity.foundationDate = createUser.instituition.foundationDate;
         if(createUser.instituition.segment)
           instituitionEntity.segment = createUser.instituition.segment;
 
-        const createdUser: UserEntity = await this.userRepository.save(userEntity);
         instituitionEntity.user = createdUser;
-        
-        const createdInstituition = await this.userInstituitionRepository.save(instituitionEntity);           
+        const createdInstituition = await queryRunner.manager.save(InstituitionEntity, instituitionEntity);
         createdUser.instituition = createdInstituition;
-
-        await this.userRepository.save(createdUser);
+        await queryRunner.manager.save(UserEntity, createdUser);
       }
       else{
         throw new BadRequestException('Tipo de usuário inválido.');
       }
 
+      await queryRunner.commitTransaction();
+
       return{statusCode: 201, message: 'Usuário cadastrado com sucesso.'};
 
     } catch (erro) {
+      await queryRunner.rollbackTransaction();
+      console.log(erro);
       if(erro instanceof BadRequestException)
         throw erro;
-      
       throw new InternalServerErrorException('Erro interno. Verifique os dados e tente novamente.')
+    } finally {
+      await queryRunner.release();
     }
   }
 
