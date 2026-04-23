@@ -1,9 +1,9 @@
 import { IsEmail, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsPhoneNumber, IsString, MinLength, ValidateNested } from "class-validator";
 import { Type } from "class-transformer";
-import { UserTypeEnum } from "src/shared/enums/user-type.enums";
 import { CreatePersonDTO } from "./person/create-person.dto";
 import { CreateInstituitionDTO } from "./instituition/create-instituition.dto";
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
+import { UserTypeEnum } from "../../../shared/enums/user-type.enums";
 
 export class CreateUserDTO{
     

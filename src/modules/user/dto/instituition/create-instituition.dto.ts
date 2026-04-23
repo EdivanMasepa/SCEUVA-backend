@@ -1,7 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import { Type } from "class-transformer";
 import { IsDate, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, MaxDate, Min, MinDate, isNotEmpty } from "class-validator";
-import { SegmentEnum } from "src/shared/enums/segment.enum";
+import { SegmentEnum } from "../../../../shared/enums/segment.enum";
 
 export class CreateInstituitionDTO {
 

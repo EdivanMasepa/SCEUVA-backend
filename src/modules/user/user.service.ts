@@ -7,9 +7,9 @@ import { PersonEntity } from './entities/person.entity';
 import { InstituitionEntity } from './entities/instituition.entity';
 import { Repository, DataSource } from 'typeorm';
 import * as bcrypt from 'bcrypt';
-import { UserTypeEnum } from 'src/shared/enums/user-type.enums';
 import { ListUserDTO } from './dto/list-user.dto';
 import { plainToInstance } from 'class-transformer';
+import { UserTypeEnum } from '../../shared/enums/user-type.enums';
 
 @Injectable()
 export class UserService {

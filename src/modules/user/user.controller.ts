@@ -4,8 +4,8 @@ import { CreateUserDTO } from './dto/create-user.dto';
 import { UpdateUserDTO } from './dto/update-user.dto';
 import { ListUserDTO } from './dto/list-user.dto';
 import { AuthGuard } from '@nestjs/passport';
-import { ApiResponses } from 'src/shared/swagger.decorators';
 import { ApiBearerAuth } from '@nestjs/swagger';
+import { ApiResponses } from '../../shared/swagger.decorators';
 
 @Controller('user')
 export class UserController {

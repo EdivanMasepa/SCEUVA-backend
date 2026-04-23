@@ -2,8 +2,8 @@ import { Controller, Post, Body, Res, Req, UnauthorizedException, UseGuards } fr
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import type { Request, Response} from 'express';
-import { ApiResponses } from 'src/shared/swagger.decorators';
 import { AuthGuard } from '@nestjs/passport';
+import { ApiResponses } from '../../shared/swagger.decorators';
 
 @Controller('auth')
 export class AuthController {

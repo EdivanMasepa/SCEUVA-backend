@@ -1,8 +1,8 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { Type } from "class-transformer";
 import { IsDate, IsEnum, IsNotEmpty, IsNumber, IsString, MaxDate, Min, MinDate, isNotEmpty } from "class-validator";
-import { GenderEnum } from "src/shared/enums/gender.enum";
-import { RiskLevelEnum } from "src/shared/enums/risk-level.enum";
+import { GenderEnum } from "../../../../shared/enums/gender.enum";
+import { RiskLevelEnum } from "../../../../shared/enums/risk-level.enum";
 
 export class CreatePersonDTO {
   
