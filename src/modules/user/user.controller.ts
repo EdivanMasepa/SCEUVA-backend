@@ -32,8 +32,9 @@ export class UserController {
   @Get(':id')
   @ApiBearerAuth()
   @UseGuards(AuthGuard('jwt'))
-  findOne(@Param('id') id: string) {
-    return this.userService.findByIdentifier(+id);
+  @ApiResponses([{status: 200, type: ListUserDTO}])
+  findOne(@Param('id') id: string) { console.log
+    return this.userService.findOne(+id);
   }
 
   @Patch(':id')

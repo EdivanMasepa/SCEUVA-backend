@@ -107,7 +107,7 @@ export class UserService {
     }
   }
 
-  async findByIdentifier(parameter: any): Promise<UserEntity | null>{
+  async findByIdentifier(parameter: number | string): Promise<UserEntity | null>{
     if(typeof parameter === 'number'){
       let user = await this.userRepository.findOneBy({id: parameter})
       if(user) return user;
@@ -131,6 +131,24 @@ export class UserService {
     }
     
     return null;
+  }
+
+  async findOne(parameter: number | string): Promise<ListUserDTO> {
+    try {
+      const user = await this.findByIdentifier(parameter);
+
+      if(!user) throw new NotFoundException('Usuário não encontrado.');
+
+      return plainToInstance(ListUserDTO, user, {excludeExtraneousValues: true});
+      
+    }catch(erro){
+      console.log(erro);
+
+      if(erro instanceof NotFoundException)
+        throw erro;
+      else
+        throw new InternalServerErrorException('Erro interno. Verifique os dados e tente novamente.');
+    }
   }
 
   async setRefreshToken(hashedToken: string, userId: number){
