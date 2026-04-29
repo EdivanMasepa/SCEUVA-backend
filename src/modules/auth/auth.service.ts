@@ -27,6 +27,8 @@ export class AuthService {
       return rest;
 
     } catch (erro) {
+      console.log(erro);
+      
       if(erro instanceof BadRequestException)
         throw erro
 
@@ -54,6 +56,8 @@ export class AuthService {
 
       return {accessToken, refreshToken};
     } catch (erro) {
+      console.log(erro);
+      
       throw new InternalServerErrorException('Erro ao gerar tokens de autenticação.')
     }
   }
@@ -72,6 +76,8 @@ export class AuthService {
       return tokens;
 
     } catch (erro) {
+      console.log(erro);
+      
       if(erro instanceof BadRequestException)
         throw erro
 
@@ -103,7 +109,9 @@ export class AuthService {
       await this.userService.setRefreshToken(hashed, user.id);
 
       return tokens;
-    } catch (erro) {      
+    } catch (erro) {   
+      console.log(erro);
+         
       if (erro instanceof HttpException) 
         throw erro;
 
@@ -119,6 +127,8 @@ export class AuthService {
       await this.userService.removeRefreshToken(userId);
       
     } catch (erro) {
+      console.log(erro);
+      
       if(erro instanceof UnauthorizedException)
         throw erro;
 
