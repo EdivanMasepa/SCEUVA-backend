@@ -7,8 +7,8 @@ import { RiskLevelEnum } from "../../../../shared/enums/risk-level.enum";
 export class CreatePersonDTO {
   
     @ApiProperty()
-    @IsNotEmpty({ message: "CPF não pode ser vazio."})
     @IsString({message: "CPF tem tipo inválido."})
+    @IsNotEmpty({ message: "CPF não pode ser vazio."})
     cpf: string;
   
     @ApiProperty()
@@ -25,7 +25,7 @@ export class CreatePersonDTO {
     gender: GenderEnum;
 
     @ApiProperty({ enum: RiskLevelEnum, description: 'Nível de risco em que a pessoa está.' })
-    @IsEnum(RiskLevelEnum, {message:"SITUAÇÃO não está predefinida."})
-    @IsNotEmpty({ message: "SITUAÇÃO não pode ser vazia."})
+    @IsEnum(RiskLevelEnum, {message:"NÍVEL DE RISCO não está predefinido."})
+    @IsNotEmpty({ message: "NÍVEL DE RISCO não pode ser vazia."})
     riskLevel: RiskLevelEnum;
 }
