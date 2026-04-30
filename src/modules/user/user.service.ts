@@ -151,22 +151,6 @@ export class UserService {
     }
   }
 
-  async setRefreshToken(hashedToken: string, userId: number){
-    try{
-      await this.userRepository.update(userId, {hashedRefreshToken: hashedToken})
-    }catch(erro){
-      throw new InternalServerErrorException('Erro interno ao atualizar o token de autenticação.')
-    }
-  }
-
-  async removeRefreshToken(userId: number){
-    try{
-      await this.userRepository.update(userId, {hashedRefreshToken: null})
-    }catch(erro){
-      throw new InternalServerErrorException('Erro interno ao atualizar o token de autenticação.')
-    }
-  }
-
   async findAll(filter?: { userType?: UserTypeEnum, moderator?: boolean, name?: string}, pagination?: {page?: number, limit?: number}): Promise<[ListUserDTO[], number]> {
     try {
       const page = pagination?.page && pagination?.page > 0 ? pagination?.page : 1;
@@ -207,6 +191,22 @@ export class UserService {
       console.log(erro);
       
       throw new InternalServerErrorException('Erro interno. Verifique os dados e tente novamente.')
+    }
+  }
+
+  async setRefreshToken(hashedToken: string, userId: number){
+    try{
+      await this.userRepository.update(userId, {hashedRefreshToken: hashedToken})
+    }catch(erro){
+      throw new InternalServerErrorException('Erro interno ao atualizar o token de autenticação.')
+    }
+  }
+
+  async removeRefreshToken(userId: number){
+    try{
+      await this.userRepository.update(userId, {hashedRefreshToken: null})
+    }catch(erro){
+      throw new InternalServerErrorException('Erro interno ao atualizar o token de autenticação.')
     }
   }
 
