@@ -107,25 +107,56 @@ export class UserService {
     }
   }
 
-  async findByIdentifier(parameter: number | string): Promise<UserEntity | null>{
+  async findByIdentifier(parameter: number | string, withRelations: boolean = false): Promise<UserEntity | null>{
     if(typeof parameter === 'number'){
-      let user = await this.userRepository.findOneBy({id: parameter})
+      let user: UserEntity | null;
+      if(withRelations){
+        user = await this.userRepository.findOne({
+          where: {id: parameter},
+          relations: ['person', 'instituition']
+        })
+      } else {
+        user = await this.userRepository.findOneBy({id: parameter})
+      }
       if(user) return user;
 
     } else if (typeof parameter === 'string'){
-      let user = await this.userRepository.findOne({where: {email: parameter}})
+      let user: UserEntity | null;
+      if(withRelations){
+        user = await this.userRepository.findOne({
+          where: {email: parameter},
+          relations: ['person', 'instituition']
+        })
+      } else {
+        user = await this.userRepository.findOne({where: {email: parameter}})
+      }
       if(user) return user;
 
-      user = await this.userRepository.findOne({where: {phone: parameter}})
+      if(withRelations){
+        user = await this.userRepository.findOne({
+          where: {phone: parameter},
+          relations: ['person', 'instituition']
+        })
+      } else {
+        user = await this.userRepository.findOne({where: {phone: parameter}})
+      }
       if(user) return user;
 
-      let userPerson = await this.userPersonRepository.findOne({where: {cpf: parameter}})
-      if(userPerson) 
-        user = await this.userRepository.findOneBy({id: userPerson.user.id})
+      let userPerson = await this.userPersonRepository.findOne({where: {cpf: parameter}, relations: ['user']})
+      if(userPerson) {
+        user = await this.userRepository.findOne({
+          where: {id: userPerson.user.id},
+          relations: withRelations ? ['person', 'instituition'] : []
+        })
+      }
     
-      let userIsntituitionRepository = await this.userInstituitionRepository.findOne({where: {cnpj: parameter}})
-      if(userIsntituitionRepository) 
-        user = await this.userRepository.findOneBy({id: userIsntituitionRepository.user.id})
+      let userInstituition = await this.userInstituitionRepository.findOne({where: {cnpj: parameter}, relations: ['user']})
+      if(userInstituition) {
+        user = await this.userRepository.findOne({
+          where: {id: userInstituition.user.id},
+          relations: withRelations ? ['person', 'instituition'] : []
+        })
+      }
       
       if(user) return user;
     }
@@ -210,8 +241,87 @@ export class UserService {
     }
   }
 
-  update(id: number, updateUserDto: UpdateUserDTO) {
-    return `This action updates a #${id} user`;
+  async update(id: number, updateUserDto: UpdateUserDTO) {
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try{ 
+
+      const user = await queryRunner.manager.findOne(UserEntity, {
+        where: { id },
+        relations: ['person', 'instituition']
+      });
+
+      if(!user)
+        throw new NotFoundException('Usuário não encontrado.');
+      
+      if(updateUserDto.email && updateUserDto.email !== user.email) {
+        const emailExists = await queryRunner.manager.findOne(UserEntity, {
+          where: { email: updateUserDto.email }
+        });
+        if(emailExists)
+          throw new BadRequestException('E-mail já cadastrado.');
+      }
+
+      if(updateUserDto.phone && updateUserDto.phone !== user.phone) {
+        const phoneExists = await queryRunner.manager.findOne(UserEntity, {
+          where: { phone: updateUserDto.phone }
+        });
+        if(phoneExists)
+          throw new BadRequestException('Número de telefone já cadastrado.');
+      }
+
+      const userUpdateData: Partial<UserEntity> = {};
+      if(updateUserDto.name !== undefined) userUpdateData.name = updateUserDto.name;
+      if(updateUserDto.email !== undefined) userUpdateData.email = updateUserDto.email;
+      if(updateUserDto.phone !== undefined) userUpdateData.phone = updateUserDto.phone;
+
+      if(Object.keys(userUpdateData).length > 0) {
+        await queryRunner.manager.update(UserEntity, { id: user.id }, userUpdateData);
+      }
+
+      if(user.userType === UserTypeEnum.PERSON && updateUserDto.person) {
+        if(!user.person)
+          throw new BadRequestException('Usuário não possui dados de pessoa.');
+
+        const personUpdateData: Partial<PersonEntity> = {};
+        if(updateUserDto.person.birthDate !== undefined) personUpdateData.birthDate = updateUserDto.person.birthDate;
+        if(updateUserDto.person.gender !== undefined) personUpdateData.gender = updateUserDto.person.gender;
+        if(updateUserDto.person.riskLevel !== undefined) personUpdateData.riskLevel = updateUserDto.person.riskLevel;
+
+        if(Object.keys(personUpdateData).length > 0) {
+          await queryRunner.manager.update(PersonEntity, { id: user.person.id }, personUpdateData);
+        }
+      }
+      
+      if(user.userType === UserTypeEnum.INSTITUITION && updateUserDto.instituition) {
+        if(!user.instituition)
+          throw new BadRequestException('Usuário não possui dados de instituição.');
+
+        const instituitionUpdateData: Partial<InstituitionEntity> = {};
+        if(updateUserDto.instituition.foundationDate !== undefined) instituitionUpdateData.foundationDate = updateUserDto.instituition.foundationDate;
+        if(updateUserDto.instituition.segment !== undefined) instituitionUpdateData.segment = updateUserDto.instituition.segment;
+
+        if(Object.keys(instituitionUpdateData).length > 0) {
+          await queryRunner.manager.update(InstituitionEntity, { id: user.instituition.id }, instituitionUpdateData);
+        }
+      }
+      
+      await queryRunner.commitTransaction();
+      return {statusCode: 200, message: 'Atualizado com sucesso.'};
+
+    } catch(erro) {
+      await queryRunner.rollbackTransaction();
+      console.log(erro);
+
+      if(erro instanceof NotFoundException || erro instanceof BadRequestException)
+        throw erro;
+
+      throw new InternalServerErrorException('Erro ao atualizar cadastro. Tente novamente.');
+    } finally {
+      await queryRunner.release();
+    }
   }
 
   remove(id: number) {

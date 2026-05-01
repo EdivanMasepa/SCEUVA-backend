@@ -38,6 +38,9 @@ export class UserController {
   }
 
   @Patch(':id')
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard('jwt'))
+  @ApiResponses([{status: 200, description: 'Atualizado com sucesso.'}])
   update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDTO) {
     return this.userService.update(+id, updateUserDto);
   }
