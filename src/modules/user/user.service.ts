@@ -324,8 +324,45 @@ export class UserService {
     }
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} user`;
+  async remove(id: number) {
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      const user = await queryRunner.manager.findOne(UserEntity, {
+        where: { id },
+        relations: ['person', 'instituition']
+      });
+
+      if(!user)
+        throw new NotFoundException('Usuário não encontrado.');
+
+      if(user.userType === UserTypeEnum.PERSON && user.person) {
+        await queryRunner.manager.delete(PersonEntity, { id: user.person.id });
+      }
+
+      if(user.userType === UserTypeEnum.INSTITUITION && user.instituition) {
+        await queryRunner.manager.delete(InstituitionEntity, { id: user.instituition.id });
+      }
+
+      await queryRunner.manager.delete(UserEntity, { id: user.id });
+
+      await queryRunner.commitTransaction();
+      return { statusCode: 200, message: 'Usuário removido com sucesso.' };
+
+    } catch(erro) {
+      console.log(erro);
+      
+      await queryRunner.rollbackTransaction();
+
+      if(erro instanceof NotFoundException)
+        throw erro;
+
+      throw new InternalServerErrorException('Erro ao remover usuário. Tente novamente.');
+    } finally {
+      await queryRunner.release();
+    }
   }
 
   validateCPF(cpf: string){
