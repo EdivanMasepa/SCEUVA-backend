@@ -3,7 +3,7 @@ import { MailService } from "./mail.service";
 import { MailController } from "./mail.controller";
 
 @Module({
-    exports: [],
+    exports: [MailService],
     providers: [MailService],
     controllers: [MailController]
 })
