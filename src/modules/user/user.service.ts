@@ -10,6 +10,7 @@ import * as bcrypt from 'bcrypt';
 import { ListUserDTO } from './dto/list-user.dto';
 import { plainToInstance } from 'class-transformer';
 import { UserTypeEnum } from '../../shared/enums/user-type.enums';
+import { EmailVerificationService } from '../auth/services/email-verification.service';
 
 @Injectable()
 export class UserService {
@@ -18,7 +19,8 @@ export class UserService {
     @InjectRepository(UserEntity) private readonly userRepository: Repository<UserEntity>,
     @InjectRepository(PersonEntity) private readonly userPersonRepository: Repository<PersonEntity>,
     @InjectRepository(InstituitionEntity) private readonly userInstituitionRepository: Repository<InstituitionEntity>,
-    private readonly dataSource: DataSource
+    private readonly dataSource: DataSource,
+    private emailVerificationService: EmailVerificationService
   ){}
   
   async create(createUser: CreateUserDTO) {
@@ -32,7 +34,6 @@ export class UserService {
 
       const senhaHasheada: string = await bcrypt.hash(createUser.password, 10);
 
-      // checar duplicados usando o manager da transação
       if (createUser.phone) {
         const existsPhone = await queryRunner.manager.findOne(UserEntity, { where: { phone: createUser.phone } });
         if (existsPhone) throw new BadRequestException('Número de telefone já cadastrado.');
@@ -94,6 +95,8 @@ export class UserService {
 
       await queryRunner.commitTransaction();
 
+      await this.emailVerificationService.sendVerificationCode(createdUser.email);
+
       return{statusCode: 201, message: 'Usuário cadastrado com sucesso.'};
 
     } catch (erro) {
@@ -105,6 +108,15 @@ export class UserService {
     } finally {
       await queryRunner.release();
     }
+  }
+
+  async verifyEmail(email: string, code: string): Promise<string>{
+    const isValid = await this.emailVerificationService.validateCode(email, code);
+
+    if(!isValid)
+      throw new BadRequestException('Código de verificação inválido.');
+
+    return 'Email verificado com sucesso.';
   }
 
   async findByIdentifier(parameter: number | string, withRelations: boolean = false): Promise<UserEntity | null>{
