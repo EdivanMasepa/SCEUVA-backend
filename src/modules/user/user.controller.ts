@@ -6,6 +6,7 @@ import { ListUserDTO } from './dto/list-user.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiBearerAuth } from '@nestjs/swagger';
 import { ApiResponses } from '../../shared/swagger.decorators';
+import { VerifyEmailDTO } from './dto/verify-email.dto';
 
 @Controller('user')
 export class UserController {
@@ -48,5 +49,11 @@ export class UserController {
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.userService.remove(+id);
+  }
+
+  @Post('verify-email')
+  @ApiBearerAuth()
+  verifyEmail(@Body() verifyEmailDto: VerifyEmailDTO) {
+    return this.userService.verifyEmail(verifyEmailDto.email, verifyEmailDto.code);
   }
 }
