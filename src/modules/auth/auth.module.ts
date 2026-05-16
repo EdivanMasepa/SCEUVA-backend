@@ -8,6 +8,9 @@ import { JwtStrategy } from './strategies/jwt.strategy';
 import { UserModule } from '../user/user.module';
 import { EmailVerificationService } from './services/email-verification.service';
 import { MailModule } from '../mail/mail.module';
+import { MemoryVerificationStorageService } from './verification/memory-verification-storage.service';
+import { VerificationService } from './verification/verification.service';
+import { VerificationStorage } from './verification/verification-storage.abstract';
 
 @Module({
   imports:[
@@ -22,7 +25,17 @@ import { MailModule } from '../mail/mail.module';
       })
   })],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy, EmailVerificationService],
-  exports: [AuthService, JwtStrategy, EmailVerificationService]
+  providers: [
+    AuthService,
+    JwtStrategy,
+    EmailVerificationService,
+    MemoryVerificationStorageService,
+    VerificationService, 
+    {
+         provide: VerificationStorage,
+         useClass: MemoryVerificationStorageService,
+      },
+  ],
+  exports: [AuthService, JwtStrategy, EmailVerificationService, MemoryVerificationStorageService, VerificationService, VerificationStorage]
 })
 export class AuthModule {}
