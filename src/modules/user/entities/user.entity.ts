@@ -30,6 +30,9 @@ export class UserEntity {
     @Column({ type: 'text', nullable: true })
     hashedRefreshToken?: string | null;
 
+    @Column({ default: false })
+    emailVerified: boolean;
+
     @OneToOne(() => PersonEntity, person => person.user, {nullable:true, eager: true})
     person: PersonEntity;
 
