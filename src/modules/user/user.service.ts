@@ -11,6 +11,8 @@ import { ListUserDTO } from './dto/list-user.dto';
 import { plainToInstance } from 'class-transformer';
 import { UserTypeEnum } from '../../shared/enums/user-type.enums';
 import { EmailVerificationService } from '../auth/services/email-verification.service';
+import { MemoryVerificationStorageService } from '../auth/verification/memory-verification-storage.service';
+import { VerificationService } from '../auth/verification/verification.service';
 
 @Injectable()
 export class UserService {
@@ -20,7 +22,8 @@ export class UserService {
     @InjectRepository(PersonEntity) private readonly userPersonRepository: Repository<PersonEntity>,
     @InjectRepository(InstituitionEntity) private readonly userInstituitionRepository: Repository<InstituitionEntity>,
     private readonly dataSource: DataSource,
-    private emailVerificationService: EmailVerificationService
+    private emailVerificationService: EmailVerificationService,
+    private verificationService: VerificationService
   ){}
   
   async create(createUser: CreateUserDTO) {
@@ -95,7 +98,7 @@ export class UserService {
 
       await queryRunner.commitTransaction();
 
-      await this.emailVerificationService.sendVerificationCode(createdUser.email);
+      await this.emailVerificationService.sendVerificationEmail(createdUser.email);
 
       return{statusCode: 201, message: 'Usuário cadastrado com sucesso.'};
 
@@ -111,10 +114,19 @@ export class UserService {
   }
 
   async verifyEmail(email: string, code: string): Promise<string>{
-    const isValid = await this.emailVerificationService.validateCode(email, code);
+
+    const user = await this.userRepository.findOneBy({ email });
+    
+    if (!user) 
+      throw new NotFoundException('Usuário não encontrado.');
+
+    const isValid = await this.verificationService.validate(email, code);
 
     if(!isValid)
       throw new BadRequestException('Código de verificação inválido.');
+
+    user.emailVerified = true;
+    await this.userRepository.save(user); 
 
     return 'Email verificado com sucesso.';
   }

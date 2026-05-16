@@ -6,9 +6,10 @@ import { UserEntity } from './entities/user.entity';
 import { PersonEntity } from './entities/person.entity';
 import { InstituitionEntity } from './entities/instituition.entity';
 import { AuthModule } from '../auth/auth.module';
+import { MailModule } from '../mail/mail.module';
 
 @Module({
-  imports:[TypeOrmModule.forFeature([UserEntity, PersonEntity, InstituitionEntity]), forwardRef(() => AuthModule)],
+  imports:[TypeOrmModule.forFeature([UserEntity, PersonEntity, InstituitionEntity]), forwardRef(() => AuthModule), MailModule],
   controllers: [UserController],
   providers: [UserService],
   exports: [UserService]
