@@ -112,7 +112,7 @@ export class UserService {
     }
   }
 
-  async resendVerificationEmail(email: string): Promise<{statusCode: number; message: string}> { console.log(email)
+  async resendVerificationEmail(email: string): Promise<{statusCode: number; message: string}> {
     const user = await this.findByIdentifier(email, false);
 
     if (!user) 
