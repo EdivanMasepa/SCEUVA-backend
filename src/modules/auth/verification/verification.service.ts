@@ -21,12 +21,6 @@ export class VerificationService {
     }
 
     async validate(email: string, code: string): Promise<boolean> {
-        
-        const isValid = await this.verificationStorage.validate(email, code);
-
-        if(!isValid) 
-            await this.verificationStorage.remove(email);
-
-        return isValid;
+        return await this.verificationStorage.validate(email, code);
     }
 }
