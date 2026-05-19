@@ -56,4 +56,10 @@ export class UserController {
   verifyEmail(@Body() verifyEmailDto: VerifyEmailDTO) {
     return this.userService.verifyEmail(verifyEmailDto.email, verifyEmailDto.code);
   }
+
+  @Post('resend-verification-email')
+  @ApiBearerAuth()
+  resendVerificationEmail(@Body('email') email: string) {
+    return this.userService.resendVerificationEmail(email);
+  }
 }

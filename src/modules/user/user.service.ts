@@ -11,7 +11,6 @@ import { ListUserDTO } from './dto/list-user.dto';
 import { plainToInstance } from 'class-transformer';
 import { UserTypeEnum } from '../../shared/enums/user-type.enums';
 import { EmailVerificationService } from '../auth/services/email-verification.service';
-import { MemoryVerificationStorageService } from '../auth/verification/memory-verification-storage.service';
 import { VerificationService } from '../auth/verification/verification.service';
 
 @Injectable()
@@ -26,7 +25,7 @@ export class UserService {
     private verificationService: VerificationService
   ){}
   
-  async create(createUser: CreateUserDTO) {
+  async create(createUser: CreateUserDTO): Promise<{statusCode: number; message: string}> {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -113,9 +112,20 @@ export class UserService {
     }
   }
 
+  async resendVerificationEmail(email: string): Promise<{statusCode: number; message: string}> { console.log(email)
+    const user = await this.findByIdentifier(email, false);
+
+    if (!user) 
+      throw new NotFoundException('Usuário não encontrado.');
+
+    await this.emailVerificationService.sendVerificationEmail(user.email);
+
+    return{statusCode: 200, message: 'Email reenviado com sucesso.'};
+  }
+
   async verifyEmail(email: string, code: string): Promise<string>{
 
-    const user = await this.userRepository.findOneBy({ email });
+    const user = await this.findByIdentifier(email, false);
     
     if (!user) 
       throw new NotFoundException('Usuário não encontrado.');
