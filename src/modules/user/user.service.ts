@@ -284,8 +284,6 @@ export class UserService {
       if (!id) {
         throw new UnauthorizedException('Usuário não autenticado.');
       }
-
-console.log(id)
       
       const user = await queryRunner.manager.findOne(UserEntity, {
         where: { id: id },
@@ -295,7 +293,6 @@ console.log(id)
       if(!user) {
         throw new NotFoundException('Usuário não encontrado.');
       }
-      console.log(user)
 
       if(updateUserDto.email && updateUserDto.email !== user.email) {
         const emailExists = await queryRunner.manager.findOne(UserEntity, {
