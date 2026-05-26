@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, InternalServerErrorException, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { CreateUserDTO } from './dto/create-user.dto';
 import { UpdateUserDTO } from './dto/update-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -281,15 +281,22 @@ export class UserService {
     await queryRunner.startTransaction();
 
     try{ 
+      if (!id) {
+        throw new UnauthorizedException('Usuário não autenticado.');
+      }
 
+console.log(id)
+      
       const user = await queryRunner.manager.findOne(UserEntity, {
-        where: { id },
+        where: { id: id },
         relations: ['person', 'instituition']
       });
 
-      if(!user)
+      if(!user) {
         throw new NotFoundException('Usuário não encontrado.');
-      
+      }
+      console.log(user)
+
       if(updateUserDto.email && updateUserDto.email !== user.email) {
         const emailExists = await queryRunner.manager.findOne(UserEntity, {
           where: { email: updateUserDto.email }
@@ -349,7 +356,7 @@ export class UserService {
       await queryRunner.rollbackTransaction();
       console.log(erro);
 
-      if(erro instanceof NotFoundException || erro instanceof BadRequestException)
+      if(erro instanceof NotFoundException || erro instanceof BadRequestException || erro instanceof UnauthorizedException)
         throw erro;
 
       throw new InternalServerErrorException('Erro ao atualizar cadastro. Tente novamente.');
@@ -375,7 +382,7 @@ export class UserService {
       if(!user) {
         throw new NotFoundException('Usuário não encontrado.');
       }
-      
+
       const senhaValida = await bcrypt.compare(password, user.password);
 
       if(!senhaValida) {

@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Request } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDTO } from './dto/create-user.dto';
 import { UpdateUserDTO } from './dto/update-user.dto';
@@ -7,6 +7,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { ApiBearerAuth } from '@nestjs/swagger';
 import { ApiResponses } from '../../shared/swagger.decorators';
 import { VerifyEmailDTO } from './dto/verify-email.dto';
+import type { Request as ExpressRequest } from 'express';
 
 @Controller('user')
 export class UserController {
@@ -38,12 +39,12 @@ export class UserController {
     return this.userService.findOne(+id);
   }
 
-  @Patch(':id')
+  @Patch()
   @ApiBearerAuth()
   @UseGuards(AuthGuard('jwt'))
   @ApiResponses([{status: 200, description: 'Atualizado com sucesso.'}])
-  update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDTO) {
-    return this.userService.update(+id, updateUserDto);
+  update(@Request() req, @Body() updateUserDto: UpdateUserDTO) {console.log(req.user.id)
+    return this.userService.update(req.user.id, updateUserDto);
   }
 
   @Delete(':id')
