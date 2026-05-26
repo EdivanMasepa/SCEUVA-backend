@@ -358,19 +358,29 @@ export class UserService {
     }
   }
 
-  async remove(id: number) {
+  async remove(id: number, password: string) {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
 
     try {
+      if(!password)
+        throw new BadRequestException('Senha é obrigatória.');
+      
       const user = await queryRunner.manager.findOne(UserEntity, {
         where: { id },
         relations: ['person', 'instituition']
       });
 
-      if(!user)
+      if(!user) {
         throw new NotFoundException('Usuário não encontrado.');
+      }
+      
+      const senhaValida = await bcrypt.compare(password, user.password);
+
+      if(!senhaValida) {
+        throw new BadRequestException('Senha incorreta.');
+      }
 
       if(user.userType === UserTypeEnum.PERSON && user.person) {
         await queryRunner.manager.delete(PersonEntity, { id: user.person.id });
