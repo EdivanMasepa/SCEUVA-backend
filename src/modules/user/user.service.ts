@@ -383,7 +383,7 @@ export class UserService {
       const senhaValida = await bcrypt.compare(password, user.password);
 
       if(!senhaValida) {
-        throw new BadRequestException('Senha incorreta.');
+        throw new BadRequestException('Senha inválida.');
       }
 
       if(user.userType === UserTypeEnum.PERSON && user.person) {
@@ -397,14 +397,14 @@ export class UserService {
       await queryRunner.manager.delete(UserEntity, { id: user.id });
 
       await queryRunner.commitTransaction();
-      return { statusCode: 200, message: 'Usuário removido com sucesso.' };
+      return { statusCode: 200, message: 'Cadastro excluído com sucesso.' };
 
     } catch(erro) {
       console.log(erro);
       
       await queryRunner.rollbackTransaction();
 
-      if(erro instanceof NotFoundException)
+      if(erro instanceof NotFoundException || erro instanceof BadRequestException)
         throw erro;
 
       throw new InternalServerErrorException('Erro ao remover usuário. Tente novamente.');

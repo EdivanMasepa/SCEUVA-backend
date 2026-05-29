@@ -8,6 +8,7 @@ import { ApiBearerAuth } from '@nestjs/swagger';
 import { ApiResponses } from '../../shared/swagger.decorators';
 import { VerifyEmailDTO } from './dto/verify-email.dto';
 import type { Request as ExpressRequest } from 'express';
+import { RemoveAccountDTO } from './dto/remove-account.dto';
 
 @Controller('user')
 export class UserController {
@@ -47,9 +48,12 @@ export class UserController {
     return this.userService.update(req.user.id, updateUserDto);
   }
 
-  @Delete(':id')
-  remove(@Param('id') id: string, @Body('password') password: string) {
-    return this.userService.remove(+id, password);
+  @Delete()
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard('jwt'))
+  @ApiResponses([{status: 200, description: 'Cadastro excluído com sucesso.'}])
+  remove(@Request() req, @Body() password: RemoveAccountDTO) {
+    return this.userService.remove(req.user.id, password.password);
   }
 
   @Post('verify-email')
