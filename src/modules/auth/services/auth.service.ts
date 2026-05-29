@@ -20,7 +20,7 @@ export class AuthService {
       const user = await this.userService.findByIdentifier(login);
       const match = user ? await bcrypt.compare(password, user.password) : null;
       
-      if(!user || match == null) 
+      if(!user || !match || match == null) 
         throw new BadRequestException('Credenciais inválidas.');
 
       const {password: _p, ...rest } = user as any; 
