@@ -12,6 +12,7 @@ import { plainToInstance } from 'class-transformer';
 import { UserTypeEnum } from '../../shared/enums/user-type.enums';
 import { EmailVerificationService } from '../auth/services/email-verification.service';
 import { VerificationService } from '../auth/verification/verification.service';
+import { ChangePasswordDTO } from './dto/change-password.dto';
 
 @Injectable()
 export class UserService {
@@ -410,6 +411,25 @@ export class UserService {
       throw new InternalServerErrorException('Erro ao remover usuário. Tente novamente.');
     } finally {
       await queryRunner.release();
+    }
+  }
+
+  async changePassword(id: any, changePassword: ChangePasswordDTO) {
+    try {
+      const user = await this.findByIdentifier(id);
+
+      if(!user) {
+        throw new NotFoundException('Usuário nãop encontrado.');
+      }
+
+      const validatePassword = await bcrypt.compare(user.password, changePassword.currentPassword);
+
+      if(!validatePassword) {
+        throw new BadRequestException('Senha atual incorreta.');
+      }
+
+    } catch(erro) { 
+      console.log(erro);
     }
   }
 

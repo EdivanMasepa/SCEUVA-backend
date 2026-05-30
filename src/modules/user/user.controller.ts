@@ -9,6 +9,7 @@ import { ApiResponses } from '../../shared/swagger.decorators';
 import { VerifyEmailDTO } from './dto/verify-email.dto';
 import type { Request as ExpressRequest } from 'express';
 import { RemoveAccountDTO } from './dto/remove-account.dto';
+import { ChangePasswordDTO } from './dto/change-password.dto';
 
 @Controller('user')
 export class UserController {
@@ -66,5 +67,11 @@ export class UserController {
   @ApiBearerAuth()
   resendVerificationEmail(@Body('email') email: string) {
     return this.userService.resendVerificationEmail(email);
+  }
+
+  @Post('change-password')
+  @ApiBearerAuth()
+  changePassword(@Request() req,@Body() changePassword: ChangePasswordDTO) {
+    return this.userService.changePassword(req.user.id, changePassword);
   }
 }
