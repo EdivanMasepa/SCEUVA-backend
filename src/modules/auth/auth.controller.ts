@@ -66,4 +66,9 @@ export class AuthController {
     );
     return { status: 'success', message: 'Logout realizado com sucesso.' }
   }
+
+  @Post('forgot-password')
+  async forgotPassword(@Body() dto: string) {
+    //return this.authService.forgotPassword(dto);
+  }
 }
