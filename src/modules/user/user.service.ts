@@ -419,7 +419,7 @@ export class UserService {
       const user = await this.findByIdentifier(id);
 
       if(!user) {
-        throw new NotFoundException('Usuário nãop encontrado.');
+        throw new NotFoundException('Usuário não encontrado.');
       }
 
       const validatePassword = await bcrypt.compare(user.password, changePassword.currentPassword);

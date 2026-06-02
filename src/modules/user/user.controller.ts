@@ -71,7 +71,9 @@ export class UserController {
 
   @Post('change-password')
   @ApiBearerAuth()
-  changePassword(@Request() req,@Body() changePassword: ChangePasswordDTO) {
+  changePassword(@Request() req, @Body() changePassword: ChangePasswordDTO) {
     return this.userService.changePassword(req.user.id, changePassword);
   }
+
+
 }
