@@ -11,10 +11,12 @@ import { MailModule } from '../mail/mail.module';
 import { MemoryVerificationStorageService } from './verification/memory-verification-storage.service';
 import { VerificationService } from './verification/verification.service';
 import { VerificationStorage } from './verification/verification-storage.abstract';
+import { RedisModule } from '../../shared/redis/redis.module';
+import { RedisVerificationStorageService } from './verification/redis.verification-storage.service';
 
 @Module({
   imports:[
-    forwardRef(() => UserModule), MailModule,
+    forwardRef(() => UserModule), MailModule, RedisModule,
     PassportModule.register({defaultStrategy: 'jwt'}), 
     JwtModule.registerAsync({
       imports:[ConfigModule],
@@ -29,13 +31,13 @@ import { VerificationStorage } from './verification/verification-storage.abstrac
     AuthService,
     JwtStrategy,
     EmailVerificationService,
-    MemoryVerificationStorageService,
-    VerificationService, 
+    RedisVerificationStorageService, 
     {
-         provide: VerificationStorage,
-         useClass: MemoryVerificationStorageService,
-      },
+      provide: VerificationStorage,
+      useExisting: RedisVerificationStorageService,
+    },
+    VerificationService
   ],
-  exports: [AuthService, JwtStrategy, EmailVerificationService, MemoryVerificationStorageService, VerificationService, VerificationStorage]
+  exports: [AuthService, JwtStrategy, EmailVerificationService, VerificationService, VerificationStorage]
 })
 export class AuthModule {}
