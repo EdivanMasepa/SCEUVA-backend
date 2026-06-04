@@ -1,12 +1,15 @@
+import { Injectable, Logger } from "@nestjs/common";
 import { VerificationStorage } from "./verification-storage.abstract";
+import { RedisService } from "../../../shared/redis/redis.service";
 
+@Injectable()
 export class RedisVerificationStorageService implements VerificationStorage {
     private readonly TTL_SECONDS = 60 *15;
 
-    constructor(private readonly redisClient) {}
+    constructor(private readonly redisService: RedisService) {}
 
     async save(email: string, code: string): Promise<void> {
-        await this.redisClient
+        await this.redisService
         .getClient()
         .set(
             `email_verification: ${email}`,
@@ -17,7 +20,7 @@ export class RedisVerificationStorageService implements VerificationStorage {
     }
 
     async validate(email: string, code: string): Promise<boolean> {
-        const savedCode = await this.redisClient
+        const savedCode = await this.redisService
             .getClient()
             .get(`email_verification: ${email}`);
 
@@ -35,7 +38,7 @@ export class RedisVerificationStorageService implements VerificationStorage {
     }
 
     async remove(email: string): Promise <void> {
-        await this.redisClient
+        await this.redisService
             .getClient()
             .del(`email_verification: ${email}`);
     }
