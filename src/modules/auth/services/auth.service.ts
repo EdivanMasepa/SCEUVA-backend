@@ -36,6 +36,29 @@ export class AuthService {
     }
   }
 
+  async login(loginDto: LoginDto): Promise<{accessToken: string, refreshToken: string}>{
+    try {
+      const user = await this.validateLoginUser(loginDto.login, loginDto.password);
+      const tokens = await this.getTokens({sub: user.id, login: user.login});
+      
+      if(!tokens) 
+        throw new BadRequestException('Falha ao gerar tokens de autenticação.');
+      
+      const hashedRefresh = await bcrypt.hash(tokens.refreshToken, 10);
+      await this.userService.setRefreshToken(hashedRefresh, user.id);
+
+      return tokens;
+
+    } catch (erro) {
+      console.log(erro);
+      
+      if(erro instanceof BadRequestException)
+        throw erro
+
+      throw new InternalServerErrorException('Erro interno, verifique os dados e tente novamente.')
+    }
+  }
+
   async getTokens(payload: {sub: number; login: string}){
     try {
       const accessToken = await this.jwtService.signAsync(
@@ -59,29 +82,6 @@ export class AuthService {
       console.log(erro);
       
       throw new InternalServerErrorException('Erro ao gerar tokens de autenticação.')
-    }
-  }
-
-  async login(loginDto: LoginDto): Promise<{accessToken: string, refreshToken: string}>{
-    try {
-      const user = await this.validateLoginUser(loginDto.login, loginDto.password);
-      const tokens = await this.getTokens({sub: user.id, login: user.login});
-      
-      if(!tokens) 
-        throw new BadRequestException('Falha ao gerar tokens de autenticação.');
-      
-      const hashedRefresh = await bcrypt.hash(tokens.refreshToken, 10);
-      await this.userService.setRefreshToken(hashedRefresh, user.id);
-
-      return tokens;
-
-    } catch (erro) {
-      console.log(erro);
-      
-      if(erro instanceof BadRequestException)
-        throw erro
-
-      throw new InternalServerErrorException('Erro interno, verifique os dados e tente novamente.')
     }
   }
 

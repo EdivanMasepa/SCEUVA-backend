@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, InternalServerErrorException, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, forwardRef, Inject, Injectable, InternalServerErrorException, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { CreateUserDTO } from './dto/create-user.dto';
 import { UpdateUserDTO } from './dto/update-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -18,12 +18,11 @@ import { ChangePasswordDTO } from './dto/change-password.dto';
 export class UserService {
 
   constructor(
+    private readonly dataSource: DataSource,
     @InjectRepository(UserEntity) private readonly userRepository: Repository<UserEntity>,
     @InjectRepository(PersonEntity) private readonly userPersonRepository: Repository<PersonEntity>,
     @InjectRepository(InstituitionEntity) private readonly userInstituitionRepository: Repository<InstituitionEntity>,
-    private readonly dataSource: DataSource,
-    private emailVerificationService: EmailVerificationService,
-    private verificationService: VerificationService
+    @Inject(forwardRef(() => EmailVerificationService)) private emailVerificationService: EmailVerificationService
   ){}
   
   async create(createUser: CreateUserDTO): Promise<{statusCode: number; message: string}> {
@@ -113,35 +112,6 @@ export class UserService {
     }
   }
 
-  async resendVerificationEmail(id: string): Promise<{statusCode: number; message: string}> {
-    const user = await this.findByIdentifier(id, false);
-
-    if (!user) 
-      throw new NotFoundException('Usuário não encontrado.');
-
-    await this.emailVerificationService.sendVerificationEmail(user.email);
-
-    return{statusCode: 200, message: 'Email reenviado com sucesso.'};
-  }
-
-  async verifyEmail(email: string, code: string): Promise<string>{
-
-    const user = await this.findByIdentifier(email, false);
-    
-    if (!user) 
-      throw new NotFoundException('Usuário não encontrado.');
-
-    const isValid = await this.verificationService.validate(email, code);
-
-    if(!isValid)
-      throw new BadRequestException('Código de verificação inválido.');
-
-    user.emailVerified = true;
-    await this.userRepository.save(user); 
-
-    return 'Email verificado com sucesso.';
-  }
-
   async findByIdentifier(parameter: number | string, withRelations: boolean = false): Promise<UserEntity | null>{
     if(typeof parameter === 'number'){
       let user: UserEntity | null;
@@ -198,7 +168,7 @@ export class UserService {
     
     return null;
   }
-
+  
   async findOne(parameter: number | string): Promise<ListUserDTO> {
     try {
       const user = await this.findByIdentifier(parameter);
@@ -257,22 +227,6 @@ export class UserService {
       console.log(erro);
       
       throw new InternalServerErrorException('Erro interno. Verifique os dados e tente novamente.')
-    }
-  }
-
-  async setRefreshToken(hashedToken: string, userId: number){
-    try{
-      await this.userRepository.update(userId, {hashedRefreshToken: hashedToken})
-    }catch(erro){
-      throw new InternalServerErrorException('Erro interno ao atualizar o token de autenticação.')
-    }
-  }
-
-  async removeRefreshToken(userId: number){
-    try{
-      await this.userRepository.update(userId, {hashedRefreshToken: null})
-    }catch(erro){
-      throw new InternalServerErrorException('Erro interno ao atualizar o token de autenticação.')
     }
   }
 
@@ -414,22 +368,19 @@ export class UserService {
     }
   }
 
-  async changePassword(id: any, changePassword: ChangePasswordDTO) {
-    try {
-      const user = await this.findByIdentifier(id);
+  async setRefreshToken(hashedToken: string, userId: number){
+    try{
+      await this.userRepository.update(userId, {hashedRefreshToken: hashedToken})
+    }catch(erro){
+      throw new InternalServerErrorException('Erro interno ao atualizar o token de autenticação.')
+    }
+  }
 
-      if(!user) {
-        throw new NotFoundException('Usuário não encontrado.');
-      }
-
-      const validatePassword = await bcrypt.compare(user.password, changePassword.currentPassword);
-
-      if(!validatePassword) {
-        throw new BadRequestException('Senha atual incorreta.');
-      }
-
-    } catch(erro) { 
-      console.log(erro);
+  async removeRefreshToken(userId: number){
+    try{
+      await this.userRepository.update(userId, {hashedRefreshToken: null})
+    }catch(erro){
+      throw new InternalServerErrorException('Erro interno ao atualizar o token de autenticação.')
     }
   }
 
@@ -510,4 +461,26 @@ export class UserService {
 
     return true
   }
+
+  
+
+  async changePassword(id: any, changePassword: ChangePasswordDTO) {
+    try {
+      const user = await this.findByIdentifier(id);
+
+      if(!user) {
+        throw new NotFoundException('Usuário não encontrado.');
+      }
+
+      const validatePassword = await bcrypt.compare(user.password, changePassword.currentPassword);
+
+      if(!validatePassword) {
+        throw new BadRequestException('Senha atual incorreta.');
+      }
+
+    } catch(erro) { 
+      console.log(erro);
+    }
+  }
+
 }

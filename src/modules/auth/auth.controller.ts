@@ -1,13 +1,19 @@
-import { Controller, Post, Body, Res, Req, UseGuards } from '@nestjs/common';
+import { Controller, Post, Body, Res, Req, UseGuards,  } from '@nestjs/common';
 import { AuthService } from './services/auth.service';
 import { LoginDto } from './dto/login.dto';
 import type { Request, Response} from 'express';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiResponses } from '../../shared/swagger.decorators';
+import { ApiBearerAuth } from '@nestjs/swagger';
+import { EmailVerificationService } from './services/email-verification.service';
+import { VerifyEmailDTO } from './dto/verify-email.dto';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly emailVerificationService: EmailVerificationService
+  ) {}
 
   @Post('login')
   @ApiResponses([
@@ -67,8 +73,22 @@ export class AuthController {
     return { status: 'success', message: 'Logout realizado com sucesso.' }
   }
 
-  @Post('forgot-password')
-  async forgotPassword(@Body() dto: string) {
-    //return this.authService.forgotPassword(dto);
+  @Post('resend-verification-email')
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard('jwt'))
+  resendVerificationEmail(@Req() req: Request) {
+    const userId = (req as any).user?.id;
+    return this.emailVerificationService.resendVerificationEmail(userId);
   }
+
+
+  @Post('verify-email')
+  @ApiBearerAuth()
+  verifyEmail(@Body() verifyEmailDto: VerifyEmailDTO) {
+    return this.emailVerificationService.verifyEmail(verifyEmailDto.email, verifyEmailDto.code);
+  }
+  // @Post('forgot-password')
+  // async forgotPassword(@Body() dto: string) {
+  //   return this.authService.forgotPassword(dto);
+  // }
 }

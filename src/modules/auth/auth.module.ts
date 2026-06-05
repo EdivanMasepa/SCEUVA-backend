@@ -8,11 +8,11 @@ import { JwtStrategy } from './strategies/jwt.strategy';
 import { UserModule } from '../user/user.module';
 import { EmailVerificationService } from './services/email-verification.service';
 import { MailModule } from '../mail/mail.module';
-import { MemoryVerificationStorageService } from './verification/memory-verification-storage.service';
+import { MemoryVerificationStorageService } from './verification/storage/memory-verification-storage.service';
 import { VerificationService } from './verification/verification.service';
-import { VerificationStorage } from './verification/verification-storage.abstract';
+import { VerificationStorage } from './verification/storage/verification-storage.abstract';
 import { RedisModule } from '../../shared/redis/redis.module';
-import { RedisVerificationStorageService } from './verification/redis.verification-storage.service';
+import { RedisVerificationStorageService } from './verification/storage/redis-verification-storage.service';
 
 @Module({
   imports:[

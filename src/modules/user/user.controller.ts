@@ -6,9 +6,9 @@ import { ListUserDTO } from './dto/list-user.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiBearerAuth } from '@nestjs/swagger';
 import { ApiResponses } from '../../shared/swagger.decorators';
-import { VerifyEmailDTO } from './dto/verify-email.dto';
 import { RemoveAccountDTO } from './dto/remove-account.dto';
 import { ChangePasswordDTO } from './dto/change-password.dto';
+import { VerifyEmailDTO } from '../auth/dto/verify-email.dto';
 
 @Controller('user')
 export class UserController {
@@ -56,24 +56,9 @@ export class UserController {
     return this.userService.remove(req.user.id, password.password);
   }
 
-  @Post('verify-email')
-  @ApiBearerAuth()
-  verifyEmail(@Body() verifyEmailDto: VerifyEmailDTO) {
-    return this.userService.verifyEmail(verifyEmailDto.email, verifyEmailDto.code);
-  }
-
-  @Post('resend-verification-email')
-  @ApiBearerAuth()
-  @UseGuards(AuthGuard('jwt'))
-  resendVerificationEmail(@Request() req) { console.log(req.user,' oi')
-    return this.userService.resendVerificationEmail(req.user.id);
-  }
-
   @Post('change-password')
   @ApiBearerAuth()
   changePassword(@Request() req, @Body() changePassword: ChangePasswordDTO) {
     return this.userService.changePassword(req.user.id, changePassword);
   }
-
-
 }
