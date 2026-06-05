@@ -1,6 +1,7 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { VerificationStorage } from "./verification-storage.abstract";
 import { RedisService } from "../../../shared/redis/redis.service";
+import { maskEmail } from "../../../shared/functions/maskEmail";
 
 @Injectable()
 export class RedisVerificationStorageService implements VerificationStorage {
@@ -19,7 +20,7 @@ export class RedisVerificationStorageService implements VerificationStorage {
             this.TTL_SECONDS
         );
 
-        this.logger.log(`Code saved for ${email}`);
+        this.logger.log(`Code saved for ${maskEmail(email)}`);
     }
 
     async validate(email: string, code: string): Promise<boolean> {
@@ -28,12 +29,12 @@ export class RedisVerificationStorageService implements VerificationStorage {
             .get(`email_verification: ${email}`);
 
         if(!savedCode) {
-            this.logger.log(`No code found for ${email}`);
+            this.logger.log(`No code found for ${maskEmail(email)}`);
             return false;
         }
 
         if(savedCode !== code ) {
-            this.logger.log(`Invalid code for ${email}`);
+            this.logger.log(`Invalid code for ${maskEmail(email)}`);
             return false;
         }
         
@@ -47,6 +48,6 @@ export class RedisVerificationStorageService implements VerificationStorage {
             .getClient()
             .del(`email_verification: ${email}`);
 
-        this.logger.log(`Code removed for ${email}`)
+        this.logger.log(`Code removed for ${maskEmail(email)}`)
     }
 }
