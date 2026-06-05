@@ -1,5 +1,5 @@
 import { Type } from 'class-transformer';
-import { IsEmail, IsOptional, IsPhoneNumber, IsString, MinLength, ValidateNested } from 'class-validator';
+import { IsBoolean, IsEmail, IsOptional, IsPhoneNumber, IsString, MinLength, ValidateNested } from 'class-validator';
 import { UpdatePersonDTO } from './person/update-person.dto';
 import { UpdateInstituitionDTO } from './instituition/update-instituition.dto';
 import { ApiPropertyOptional } from '@nestjs/swagger';
@@ -22,6 +22,11 @@ export class UpdateUserDTO{
     @IsString({message:'TELEFONE tem tipo inválido.'})
     @IsPhoneNumber('BR', {message: 'Telefone inválido. Informe um número de telefone nacional.'})
     phone?: string;
+    
+    @ApiPropertyOptional()
+    @IsOptional()
+    @IsBoolean({message:'EMAIL VERIFICADO tem tipo inválido.'})
+    emailVerified?: boolean;
 
     @ApiPropertyOptional()
     @IsOptional()
