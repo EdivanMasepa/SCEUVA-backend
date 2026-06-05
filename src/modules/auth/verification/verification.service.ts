@@ -1,6 +1,5 @@
 import { Injectable } from "@nestjs/common";
-import { VerificationStorage } from "./verification-storage.abstract";
-import e from "express";
+import { VerificationStorage } from "./storage/verification-storage.abstract";
 
 @Injectable()
 export class VerificationService {
