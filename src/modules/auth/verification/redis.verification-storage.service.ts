@@ -5,6 +5,7 @@ import { RedisService } from "../../../shared/redis/redis.service";
 @Injectable()
 export class RedisVerificationStorageService implements VerificationStorage {
     private readonly TTL_SECONDS = 60 *15;
+    private readonly logger = new Logger(RedisVerificationStorageService.name);
 
     constructor(private readonly redisService: RedisService) {}
 
@@ -17,6 +18,8 @@ export class RedisVerificationStorageService implements VerificationStorage {
             'EX',
             this.TTL_SECONDS
         );
+
+        this.logger.log(`Code saved for ${email}`);
     }
 
     async validate(email: string, code: string): Promise<boolean> {
@@ -25,10 +28,12 @@ export class RedisVerificationStorageService implements VerificationStorage {
             .get(`email_verification: ${email}`);
 
         if(!savedCode) {
+            this.logger.log(`No code found for ${email}`);
             return false;
         }
 
         if(savedCode !== code ) {
+            this.logger.log(`Invalid code for ${email}`);
             return false;
         }
         
@@ -41,5 +46,7 @@ export class RedisVerificationStorageService implements VerificationStorage {
         await this.redisService
             .getClient()
             .del(`email_verification: ${email}`);
+
+        this.logger.log(`Code removed for ${email}`)
     }
 }
