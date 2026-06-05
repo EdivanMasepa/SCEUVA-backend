@@ -7,7 +7,6 @@ import { AuthGuard } from '@nestjs/passport';
 import { ApiBearerAuth } from '@nestjs/swagger';
 import { ApiResponses } from '../../shared/swagger.decorators';
 import { VerifyEmailDTO } from './dto/verify-email.dto';
-import type { Request as ExpressRequest } from 'express';
 import { RemoveAccountDTO } from './dto/remove-account.dto';
 import { ChangePasswordDTO } from './dto/change-password.dto';
 
@@ -65,8 +64,9 @@ export class UserController {
 
   @Post('resend-verification-email')
   @ApiBearerAuth()
-  resendVerificationEmail(@Body('email') email: string) {
-    return this.userService.resendVerificationEmail(email);
+  @UseGuards(AuthGuard('jwt'))
+  resendVerificationEmail(@Request() req) { console.log(req.user,' oi')
+    return this.userService.resendVerificationEmail(req.user.id);
   }
 
   @Post('change-password')

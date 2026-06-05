@@ -5,6 +5,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { SwaggerModule } from '@nestjs/swagger';
 import { AuthModule } from './modules/auth/auth.module';
 import { MailModule } from './modules/mail/mail.module';
+import { RedisModule } from './shared/redis/redis.module';
 
 @Module({
   imports: [ConfigModule.forRoot({isGlobal: true}), TypeOrmModule.forRoot({
@@ -20,7 +21,8 @@ import { MailModule } from './modules/mail/mail.module';
     AuthModule, 
     UserModule,
     SwaggerModule,
-    MailModule],
+    MailModule,
+    RedisModule],
   controllers: [],
   providers: [],
 })

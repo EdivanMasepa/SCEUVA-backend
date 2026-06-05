@@ -113,8 +113,8 @@ export class UserService {
     }
   }
 
-  async resendVerificationEmail(email: string): Promise<{statusCode: number; message: string}> {
-    const user = await this.findByIdentifier(email, false);
+  async resendVerificationEmail(id: string): Promise<{statusCode: number; message: string}> {
+    const user = await this.findByIdentifier(id, false);
 
     if (!user) 
       throw new NotFoundException('Usuário não encontrado.');
