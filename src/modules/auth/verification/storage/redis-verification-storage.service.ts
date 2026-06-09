@@ -1,7 +1,7 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { VerificationStorage } from "./verification-storage.abstract";
-import { RedisService } from "../../../shared/redis/redis.service";
-import { maskEmail } from "../../../shared/functions/maskEmail";
+import { RedisService } from "../../../../shared/redis/redis.service";
+import { maskEmail } from "../../../../shared/functions/maskEmail";
 
 @Injectable()
 export class RedisVerificationStorageService implements VerificationStorage {
