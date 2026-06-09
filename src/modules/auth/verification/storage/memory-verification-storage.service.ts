@@ -1,16 +1,12 @@
 import { Injectable } from "@nestjs/common";
 import { VerificationStorage } from "./verification-storage.abstract";
-import { VerificationData } from "../../../shared/types/verification.data";
+import { VerificationData } from "../../../../shared/types/verification.data";
 
 @Injectable()
 export class MemoryVerificationStorageService implements VerificationStorage {
     private storage = new Map<string, VerificationData>();
 
     async save(email: string, code: string): Promise<void> {
-        const data = this.storage.get(email);
-
-        if(!data)
-            this.remove(email);
 
         this.storage.set(email, {
             code,
