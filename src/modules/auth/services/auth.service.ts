@@ -1,10 +1,12 @@
-import { BadRequestException, ForbiddenException, HttpException, Injectable, InternalServerErrorException, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, HttpException, Injectable, InternalServerErrorException, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
 import { LoginDto } from '../dto/login.dto';
 import { Request } from 'express';
 import { UserService } from '../../user/user.service';
+import { EmailVerificationService } from './email-verification.service';
+import { UserEntity } from '../../user/entities/user.entity';
 
 @Injectable()
 export class AuthService {
@@ -12,7 +14,8 @@ export class AuthService {
   constructor(
     private userService: UserService,
     private jwtService: JwtService,
-    private configService: ConfigService
+    private configService: ConfigService,
+    private readonly emailVerificationService: EmailVerificationService
   ){}
 
   async validateLoginUser(login: string, password: string){
@@ -134,5 +137,25 @@ export class AuthService {
 
       throw new InternalServerErrorException('Erro ao remover token.')
     }
+  }
+
+  async verifyEmailAndLogin(email: string, code: string): Promise<{accessToken: string, refreshToken: string}>{
+    await this.emailVerificationService.verifyEmail(email, code);
+
+    const user = await this.userService.findByIdentifier(email, false);
+
+    if(!user)
+      throw new NotFoundException('Usuário não encontrado.')
+
+    const tokens = await this.getTokens({
+      sub: user.id,
+      login: user.email
+    });
+
+    const hashedRefresh = await bcrypt.hash(tokens.refreshToken, 10);
+
+    await this.userService.setRefreshToken(hashedRefresh, user.id);
+
+    return tokens;
   }
 }

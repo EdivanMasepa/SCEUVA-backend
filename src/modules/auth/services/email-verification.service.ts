@@ -50,7 +50,7 @@ Equipe SCEUVA.
         return{statusCode: 200, message: 'Email reenviado com sucesso.'};
     }
 
-    async verifyEmail(email: string, code: string): Promise<string>{
+    async verifyEmail(email: string, code: string): Promise<void>{
         const user = await this.userService.findByIdentifier(email, false);
 
         if (!user) 
@@ -66,7 +66,5 @@ Equipe SCEUVA.
         };
 
         await this.userService.update(user.id, userUpdated);
-
-        return 'Email verificado com sucesso.';
     }
 }

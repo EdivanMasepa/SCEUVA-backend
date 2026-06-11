@@ -7,19 +7,21 @@ import { ApiResponses } from '../../shared/swagger.decorators';
 import { ApiBearerAuth } from '@nestjs/swagger';
 import { EmailVerificationService } from './services/email-verification.service';
 import { VerifyEmailDTO } from './dto/verify-email.dto';
+import { ConfigService } from '@nestjs/config';
 
 @Controller('auth')
 export class AuthController {
   constructor(
     private readonly authService: AuthService,
-    private readonly emailVerificationService: EmailVerificationService
+    private readonly emailVerificationService: EmailVerificationService,
+    private readonly configService: ConfigService
   ) {}
 
   @Post('login')
   @ApiResponses([
     { status: 200, description: 'accessToken: string.'},
     { status: 400, description: 'Credenciais inválidas.'},
-    { status: 400, description: 'Falha ao gerar tokensd e autenticação.'},
+    { status: 400, description: 'Falha ao gerar tokens de autenticação.'},
     { status: 500, description: 'Erro interno. Verifique os dados e tente novamente.'},
     { status: 500, description: 'Erro ao gerar tokens de autenticação.'}
   ])
@@ -84,9 +86,19 @@ export class AuthController {
 
   @Post('verify-email')
   @ApiBearerAuth()
-  verifyEmail(@Body() verifyEmailDto: VerifyEmailDTO) {
-    return this.emailVerificationService.verifyEmail(verifyEmailDto.email, verifyEmailDto.code);
+  async verifyEmail(@Body() verifyEmailDto: VerifyEmailDTO, @Res({passthrough: true}) res: Response): Promise<{accessToken: string}> {
+    const tokens = await this.authService.verifyEmailAndLogin(verifyEmailDto.email, verifyEmailDto.code);
+
+    res.cookie('refreshToken', tokens.refreshToken, {
+      httpOnly: true,
+      secure: this.configService.get('NODE_ENV') === 'production',
+      sameSite: 'lax',
+      maxAge: 7 * 24 * 60 * 60 * 1000
+    });
+
+    return {accessToken: tokens.accessToken};
   }
+  
   // @Post('forgot-password')
   // async forgotPassword(@Body() dto: string) {
   //   return this.authService.forgotPassword(dto);
