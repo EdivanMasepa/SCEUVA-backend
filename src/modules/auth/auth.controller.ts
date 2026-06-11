@@ -85,7 +85,6 @@ export class AuthController {
 
 
   @Post('verify-email')
-  @ApiBearerAuth()
   async verifyEmail(@Body() verifyEmailDto: VerifyEmailDTO, @Res({passthrough: true}) res: Response): Promise<{accessToken: string}> {
     const tokens = await this.authService.verifyEmailAndLogin(verifyEmailDto.email, verifyEmailDto.code);
 
@@ -98,7 +97,7 @@ export class AuthController {
 
     return {accessToken: tokens.accessToken};
   }
-  
+
   // @Post('forgot-password')
   // async forgotPassword(@Body() dto: string) {
   //   return this.authService.forgotPassword(dto);

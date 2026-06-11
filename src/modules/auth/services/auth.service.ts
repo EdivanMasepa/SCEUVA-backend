@@ -42,7 +42,7 @@ export class AuthService {
   async login(loginDto: LoginDto): Promise<{accessToken: string, refreshToken: string}>{
     try {
       const user = await this.validateLoginUser(loginDto.login, loginDto.password);
-      const tokens = await this.getTokens({sub: user.id, login: user.login});
+      const tokens = await this.getTokens({sub: user.id});
       
       if(!tokens) 
         throw new BadRequestException('Falha ao gerar tokens de autenticação.');
@@ -62,10 +62,10 @@ export class AuthService {
     }
   }
 
-  async getTokens(payload: {sub: number; login: string}){
+  async getTokens(payload: {sub: number}){
     try {
       const accessToken = await this.jwtService.signAsync(
-        {sub: payload.sub, login: payload.login},
+        {sub: payload.sub},
         {
           secret: this.configService.get<string>('JWT_SECRET'),
           expiresIn: this.configService.get<string>('JWT_EXPIRES_IN')
@@ -73,7 +73,7 @@ export class AuthService {
       )
       
       const refreshToken = await this.jwtService.signAsync(
-        {sub: payload.sub, login: payload.login},
+        {sub: payload.sub},
         {
           secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
           expiresIn: this.configService.get<string>('JWT_REFRESH_EXPIRES_IN'),
@@ -106,7 +106,7 @@ export class AuthService {
       if(!isMatch) 
         throw new ForbiddenException('Acesso não autorizado.');
 
-      const tokens = await this.getTokens({sub: user.id, login: user.email});
+      const tokens = await this.getTokens({sub: user.id});
       const hashed = await bcrypt.hash(tokens.refreshToken, 10);
 
       await this.userService.setRefreshToken(hashed, user.id);
@@ -147,11 +147,7 @@ export class AuthService {
     if(!user)
       throw new NotFoundException('Usuário não encontrado.')
 
-    const tokens = await this.getTokens({
-      sub: user.id,
-      login: user.email
-    });
-
+    const tokens = await this.getTokens({sub: user.id});
     const hashedRefresh = await bcrypt.hash(tokens.refreshToken, 10);
 
     await this.userService.setRefreshToken(hashedRefresh, user.id);
