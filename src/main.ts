@@ -47,7 +47,7 @@ function setupSwagger(app: any) {
         try {
           const url = response.url || '';
 
-          if (url.endsWith('/auth/login')) {
+          if (url.endsWith('/auth/login') || url.endsWith('/auth/verify-email')) {
             let data: any = undefined;
             const text = response.text ?? (response.body && typeof response.body === 'string' ? response.body : undefined);
 
