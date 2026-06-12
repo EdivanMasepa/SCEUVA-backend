@@ -4,10 +4,10 @@ import { LoginDto } from './dto/login.dto';
 import type { Request, Response} from 'express';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiResponses } from '../../shared/swagger.decorators';
-import { ApiBearerAuth } from '@nestjs/swagger';
 import { EmailVerificationService } from './services/email-verification.service';
 import { VerifyEmailDTO } from './dto/verify-email.dto';
 import { ConfigService } from '@nestjs/config';
+import { EmailDTO } from './dto/email.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -76,11 +76,8 @@ export class AuthController {
   }
 
   @Post('resend-verification-email')
-  @ApiBearerAuth()
-  @UseGuards(AuthGuard('jwt'))
-  resendVerificationEmail(@Req() req: Request) {
-    const userId = (req as any).user?.id;
-    return this.emailVerificationService.resendVerificationEmail(userId);
+  resendVerificationEmail(@Body() emailDto: EmailDTO, @Res({passthrough: true}) res: Response) {
+    return this.emailVerificationService.resendVerificationEmail(emailDto.email);
   }
 
 
