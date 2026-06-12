@@ -269,6 +269,8 @@ export class UserService {
       if(updateUserDto.name !== undefined) userUpdateData.name = updateUserDto.name;
       if(updateUserDto.email !== undefined) userUpdateData.email = updateUserDto.email;
       if(updateUserDto.phone !== undefined) userUpdateData.phone = updateUserDto.phone;
+      if(updateUserDto.emailVerified !== undefined) userUpdateData.emailVerified = updateUserDto.emailVerified;
+
 
       if(Object.keys(userUpdateData).length > 0) {
         await queryRunner.manager.update(UserEntity, { id: user.id }, userUpdateData);
