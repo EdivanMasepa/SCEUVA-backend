@@ -140,12 +140,12 @@ export class AuthService {
   }
 
   async verifyEmailAndLogin(email: string, code: string): Promise<{accessToken: string, refreshToken: string}>{
-    await this.emailVerificationService.verifyEmail(email, code);
-
     const user = await this.userService.findByIdentifier(email, false);
-
+    
     if(!user)
       throw new NotFoundException('Usuário não encontrado.')
+    
+    await this.emailVerificationService.verifyEmail(email, code);
 
     const tokens = await this.getTokens({sub: user.id});
     const hashedRefresh = await bcrypt.hash(tokens.refreshToken, 10);

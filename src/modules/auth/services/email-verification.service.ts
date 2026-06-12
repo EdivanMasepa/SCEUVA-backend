@@ -1,4 +1,4 @@
-import { BadRequestException, forwardRef, Inject, Injectable, NotFoundException } from "@nestjs/common";
+import { BadRequestException, forwardRef, Inject, Injectable, InternalServerErrorException, NotFoundException } from "@nestjs/common";
 import { MailService } from "../../mail/mail.service";
 import { VerificationService } from "../verification/verification.service";
 import { UserService } from "../../user/user.service";
@@ -39,8 +39,8 @@ Equipe SCEUVA.
         return code;
     }
         
-    async resendVerificationEmail(id: string): Promise<{statusCode: number; message: string}> {
-        const user = await this.userService.findByIdentifier(id, false);
+    async resendVerificationEmail(email: string): Promise<{statusCode: number; message: string}> {
+        const user = await this.userService.findByIdentifier(email, false);
 
         if (!user) 
             throw new NotFoundException('Usuário não encontrado.');
@@ -51,20 +51,30 @@ Equipe SCEUVA.
     }
 
     async verifyEmail(email: string, code: string): Promise<void>{
-        const user = await this.userService.findByIdentifier(email, false);
+        try{
+            const user = await this.userService.findByIdentifier(email, false);
 
-        if (!user) 
-            throw new NotFoundException('Usuário não encontrado.');
+            if (!user) 
+                throw new NotFoundException('Usuário não encontrado.');
 
-        const isValid = await this.verificationService.validate(email, code);
+            if(user.emailVerified === true)
+                throw new BadRequestException('E-mail já verificado.');
 
-        if(!isValid)
-            throw new BadRequestException('Código de verificação inválido.');
+            const isValid = await this.verificationService.validate(email, code);
 
-        const userUpdated: UpdateUserDTO = {
-            emailVerified: true
-        };
+            if(!isValid)
+                throw new BadRequestException('Código de verificação inválido.');
 
-        await this.userService.update(user.id, userUpdated);
+            const userUpdated: UpdateUserDTO = {
+                emailVerified: true
+            };
+
+            await this.userService.update(user.id, userUpdated);
+        }catch(erro){
+            if(erro instanceof NotFoundException || erro instanceof BadRequestException)
+                throw erro;
+            
+            throw new InternalServerErrorException('Erro ao atulizar verificação de e-mail. Entre em contato com o suporte.')
+        }
     }
 }
