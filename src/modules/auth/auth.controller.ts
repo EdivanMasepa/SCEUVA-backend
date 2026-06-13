@@ -8,6 +8,7 @@ import { EmailVerificationService } from './services/email-verification.service'
 import { VerifyEmailDTO } from './dto/verify-email.dto';
 import { ConfigService } from '@nestjs/config';
 import { EmailDTO } from './dto/email.dto';
+import { ForgotPasswordDTO } from './dto/forgot-password.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -95,8 +96,8 @@ export class AuthController {
     return {accessToken: tokens.accessToken};
   }
 
-  // @Post('forgot-password')
-  // async forgotPassword(@Body() dto: string) {
-  //   return this.authService.forgotPassword(dto);
-  // }
+  @Post('forgot-password')
+  async forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDTO) {
+    return this.authService.forgotPassword(forgotPasswordDto);
+  }
 }

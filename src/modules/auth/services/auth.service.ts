@@ -7,6 +7,10 @@ import { Request } from 'express';
 import { UserService } from '../../user/user.service';
 import { EmailVerificationService } from './email-verification.service';
 import { UserEntity } from '../../user/entities/user.entity';
+import { ForgotPasswordDTO } from '../dto/forgot-password.dto';
+import { VerificationService } from '../verification/verification.service';
+import { UpdateUserDTO } from '../../user/dto/update-user.dto';
+import { ChangePasswordDTO } from '../../user/dto/change-password.dto';
 
 @Injectable()
 export class AuthService {
@@ -15,7 +19,8 @@ export class AuthService {
     private userService: UserService,
     private jwtService: JwtService,
     private configService: ConfigService,
-    private readonly emailVerificationService: EmailVerificationService
+    private readonly emailVerificationService: EmailVerificationService,
+    private readonly verificationService: VerificationService
   ){}
 
   async validateLoginUser(login: string, password: string){
@@ -153,5 +158,25 @@ export class AuthService {
     await this.userService.setRefreshToken(hashedRefresh, user.id);
 
     return tokens;
+  }
+
+  async forgotPassword(forgotPasswordDTO: ForgotPasswordDTO){
+    const user = await this.userService.findByIdentifier(forgotPasswordDTO.email, false);
+
+    if(!user)
+      throw new NotFoundException('Usuário não encontrado.');
+
+    const isValid = await this.verificationService.validate(forgotPasswordDTO.email, forgotPasswordDTO.code);
+
+    if(!isValid)
+      throw new BadRequestException('Código de verificação inválido.');
+
+    const userUpdated: ChangePasswordDTO = {
+      currentPassword: user.password,
+      newPassowrd: forgotPasswordDTO.newPassowrd,
+      confirmNewPassword: forgotPasswordDTO.confirmNewPassword
+    };
+
+    //await this.userService.update(user.id, userUpdated);
   }
 }
