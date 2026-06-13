@@ -3,12 +3,6 @@ import { IsInt, IsNotEmpty, IsNumber, IsOptional, IsString } from "class-validat
 
 export class ChangePasswordDTO {
 
-    @ApiPropertyOptional()
-    @IsNumber({allowNaN: false}, {message: 'CODIGO deve ser um número.'})
-    @IsInt({message: 'CODIGO deve ser um número inteiro.'})
-    @IsOptional()
-    code?: number;
-
     @ApiProperty()
     @IsNotEmpty({message: 'SENHA ATUAL é obrigatória.'})
     @IsString({message: 'SENHA ATUAL deve ser do tipo texto.'})
