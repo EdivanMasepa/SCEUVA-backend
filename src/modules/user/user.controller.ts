@@ -58,6 +58,7 @@ export class UserController {
 
   @Post('change-password')
   @ApiBearerAuth()
+  @UseGuards(AuthGuard('jwt'))
   changePassword(@Request() req, @Body() changePassword: ChangePasswordDTO) {
     return this.userService.changePassword(req.user.id, changePassword);
   }

@@ -319,6 +319,44 @@ export class UserService {
     }
   }
 
+  async changePassword(id: number, changePassword: ChangePasswordDTO) {
+    try{
+      const user = await this.findByIdentifier(id);
+
+      if(!user)
+        throw new NotFoundException('Usuário não encontrado.');
+
+      const validatePassword = await bcrypt.compare(changePassword.currentPassword, user.password);
+
+      if(!validatePassword)
+        throw new BadRequestException('Senha atual incorreta.');
+
+      if(changePassword.newPassword !== changePassword.confirmNewPassword)
+        throw new BadRequestException('As senhas não conferem.');
+      
+      const newHashedPassword = await bcrypt.hash(changePassword.newPassword, 10);
+
+      const isSamePassword = await bcrypt.compare(changePassword.newPassword, user.password);
+
+      if(isSamePassword)
+        throw new BadRequestException('A nova senha não pode ser igual à senha atual.');
+      
+      user.password = newHashedPassword;
+      await this.userRepository.save(user);
+
+      return {statusCode: 200, message: 'Senha atualizada com sucesso.'};
+    }
+    catch(erro){
+
+      if(erro instanceof NotFoundException || erro instanceof BadRequestException)
+        throw erro;
+      
+      console.log(erro);
+
+      throw new InternalServerErrorException('Erro ao atualizar senha. Verifique os dados e tente novamente.');
+    }
+  }
+  
   async remove(id: number, password: string) {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
@@ -462,27 +500,6 @@ export class UserService {
     }
 
     return true
-  }
-
-  
-
-  async changePassword(id: any, changePassword: ChangePasswordDTO) {
-    try {
-      const user = await this.findByIdentifier(id);
-
-      if(!user) {
-        throw new NotFoundException('Usuário não encontrado.');
-      }
-
-      const validatePassword = await bcrypt.compare(user.password, changePassword.currentPassword);
-
-      if(!validatePassword) {
-        throw new BadRequestException('Senha atual incorreta.');
-      }
-
-    } catch(erro) { 
-      console.log(erro);
-    }
   }
 
 }
