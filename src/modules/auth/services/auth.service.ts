@@ -173,10 +173,10 @@ export class AuthService {
 
     const userUpdated: ChangePasswordDTO = {
       currentPassword: user.password,
-      newPassowrd: forgotPasswordDTO.newPassowrd,
+      newPassword: forgotPasswordDTO.newPassowrd,
       confirmNewPassword: forgotPasswordDTO.confirmNewPassword
     };
 
-    //await this.userService.update(user.id, userUpdated);
+    await this.userService.changePassword(user.id, userUpdated);
   }
 }
