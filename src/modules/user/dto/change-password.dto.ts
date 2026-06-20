@@ -11,7 +11,7 @@ export class ChangePasswordDTO {
     @ApiProperty()
     @IsNotEmpty({message: 'NOVA SENHA é obrigatória.'})
     @IsString({message: 'NOVA SENHA deve ser do tipo texto.'})
-    newPassowrd: string;
+    newPassword: string;
 
     @ApiProperty()
     @IsNotEmpty({message: 'CONFIRMAÇÃO DE SENHA é obrigatória.'})
