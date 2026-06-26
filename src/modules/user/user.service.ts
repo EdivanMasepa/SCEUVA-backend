@@ -31,23 +31,21 @@ export class UserService {
     await queryRunner.startTransaction();
 
     try {
-      if(createUser.password != createUser.confirmPassword)
-        throw new BadRequestException('As senhas não conferem.');
-
-      const hashedPassword: string = await bcrypt.hash(createUser.password, 10);
-
-      if (createUser.phone) {
-        const existsPhone = await queryRunner.manager.findOne(UserEntity, { where: { phone: createUser.phone } });
-        if (existsPhone) 
-          throw new BadRequestException('Número de telefone já cadastrado.');
-      }
 
       if (createUser.email) {
         const existsEmail = await queryRunner.manager.findOne(UserEntity, { where: { email: createUser.email } });
         if (existsEmail) 
           throw new BadRequestException('E-mail já cadastrado.');
       }
+      if (createUser.phone) {
+        const existsPhone = await queryRunner.manager.findOne(UserEntity, { where: { phone: createUser.phone } });
+        if (existsPhone) 
+          throw new BadRequestException('Número de telefone já cadastrado.');
+      }
+      if(createUser.password != createUser.confirmPassword)
+        throw new BadRequestException('As senhas não conferem.');
 
+      const hashedPassword: string = await bcrypt.hash(createUser.password, 10);
       const userEntity: UserEntity = new UserEntity();
       userEntity.userType = createUser.userType;
       userEntity.name = createUser.name;
@@ -256,7 +254,7 @@ export class UserService {
       });
 
       if(!user)
-        throw new NotFoundException('Usuário não encontrado.');
+        throw new NotFoundException('Usuário não autorizado.');
 
       if(updateUserDto.email && updateUserDto.email !== user.email) {
         const emailExists = await queryRunner.manager.findOne(UserEntity, {
