@@ -34,16 +34,18 @@ export class UserService {
       if(createUser.password != createUser.confirmPassword)
         throw new BadRequestException('As senhas não conferem.');
 
-      const senhaHasheada: string = await bcrypt.hash(createUser.password, 10);
+      const hashedPassword: string = await bcrypt.hash(createUser.password, 10);
 
       if (createUser.phone) {
         const existsPhone = await queryRunner.manager.findOne(UserEntity, { where: { phone: createUser.phone } });
-        if (existsPhone) throw new BadRequestException('Número de telefone já cadastrado.');
+        if (existsPhone) 
+          throw new BadRequestException('Número de telefone já cadastrado.');
       }
 
       if (createUser.email) {
         const existsEmail = await queryRunner.manager.findOne(UserEntity, { where: { email: createUser.email } });
-        if (existsEmail) throw new BadRequestException('E-mail já cadastrado.');
+        if (existsEmail) 
+          throw new BadRequestException('E-mail já cadastrado.');
       }
 
       const userEntity: UserEntity = new UserEntity();
@@ -51,7 +53,7 @@ export class UserService {
       userEntity.name = createUser.name;
       userEntity.email = createUser.email;
       userEntity.phone = createUser.phone;
-      userEntity.password = senhaHasheada;
+      userEntity.password = hashedPassword;
 
       const createdUser: UserEntity = await queryRunner.manager.save(UserEntity, userEntity);
 
@@ -60,7 +62,8 @@ export class UserService {
            throw new BadRequestException('CPF inválido.');
 
         const existsCpf = await queryRunner.manager.findOne(PersonEntity, { where: { cpf: createUser.person.cpf } });
-        if (existsCpf) throw new BadRequestException('CPF já cadastrado.');
+        if (existsCpf) 
+          throw new BadRequestException('CPF já cadastrado.');
 
         const personEntity: PersonEntity = new PersonEntity();
         personEntity.cpf = createUser.person.cpf;
@@ -78,11 +81,13 @@ export class UserService {
           throw new BadRequestException('CNPJ inválido.');
 
         const existsCnpj = await queryRunner.manager.findOne(InstituitionEntity, { where: { cnpj: createUser.instituition.cnpj } });
-        if (existsCnpj) throw new BadRequestException('CNPJ já cadastrado.');
+        if (existsCnpj) 
+          throw new BadRequestException('CNPJ já cadastrado.');
 
         const instituitionEntity: InstituitionEntity = new InstituitionEntity();
         instituitionEntity.cnpj = createUser.instituition.cnpj;
         instituitionEntity.foundationDate = createUser.instituition.foundationDate;
+        
         if(createUser.instituition.segment)
           instituitionEntity.segment = createUser.instituition.segment;
 
@@ -123,7 +128,8 @@ export class UserService {
       } else {
         user = await this.userRepository.findOneBy({id: parameter})
       }
-      if(user) return user;
+      if(user) 
+        return user;
 
     } else if (typeof parameter === 'string'){
       let user: UserEntity | null;
@@ -135,7 +141,8 @@ export class UserService {
       } else {
         user = await this.userRepository.findOne({where: {email: parameter}})
       }
-      if(user) return user;
+      if(user) 
+        return user;
 
       if(withRelations){
         user = await this.userRepository.findOne({
@@ -145,7 +152,8 @@ export class UserService {
       } else {
         user = await this.userRepository.findOne({where: {phone: parameter}})
       }
-      if(user) return user;
+      if(user) 
+        return user;
 
       let userPerson = await this.userPersonRepository.findOne({where: {cpf: parameter}, relations: ['user']})
       if(userPerson) {
@@ -163,7 +171,8 @@ export class UserService {
         })
       }
       
-      if(user) return user;
+      if(user) 
+        return user;
     }
     
     return null;
@@ -173,7 +182,8 @@ export class UserService {
     try {
       const user = await this.findByIdentifier(parameter);
 
-      if(!user) throw new NotFoundException('Usuário não encontrado.');
+      if(!user) 
+        throw new NotFoundException('Usuário não encontrado.');
 
       return plainToInstance(ListUserDTO, user, {excludeExtraneousValues: true});
       
@@ -236,7 +246,7 @@ export class UserService {
     await queryRunner.startTransaction();
 
     try{ 
-      if (!id) {
+      if(!id) {
         throw new UnauthorizedException('Usuário não autenticado.');
       }
       
@@ -245,9 +255,8 @@ export class UserService {
         relations: ['person', 'instituition']
       });
 
-      if(!user) {
+      if(!user)
         throw new NotFoundException('Usuário não encontrado.');
-      }
 
       if(updateUserDto.email && updateUserDto.email !== user.email) {
         const emailExists = await queryRunner.manager.findOne(UserEntity, {
@@ -266,28 +275,32 @@ export class UserService {
       }
 
       const userUpdateData: Partial<UserEntity> = {};
-      if(updateUserDto.name !== undefined) userUpdateData.name = updateUserDto.name;
-      if(updateUserDto.email !== undefined) userUpdateData.email = updateUserDto.email;
-      if(updateUserDto.phone !== undefined) userUpdateData.phone = updateUserDto.phone;
-      if(updateUserDto.emailVerified !== undefined) userUpdateData.emailVerified = updateUserDto.emailVerified;
+      if(updateUserDto.name !== undefined) 
+        userUpdateData.name = updateUserDto.name;
+      if(updateUserDto.email !== undefined) 
+        userUpdateData.email = updateUserDto.email;
+      if(updateUserDto.phone !== undefined) 
+        userUpdateData.phone = updateUserDto.phone;
+      if(updateUserDto.emailVerified !== undefined) 
+        userUpdateData.emailVerified = updateUserDto.emailVerified;
 
 
-      if(Object.keys(userUpdateData).length > 0) {
+      if(Object.keys(userUpdateData).length > 0)
         await queryRunner.manager.update(UserEntity, { id: user.id }, userUpdateData);
-      }
 
       if(user.userType === UserTypeEnum.PERSON && updateUserDto.person) {
         if(!user.person)
           throw new BadRequestException('Usuário não possui dados de pessoa.');
 
         const personUpdateData: Partial<PersonEntity> = {};
-        if(updateUserDto.person.birthDate !== undefined) personUpdateData.birthDate = updateUserDto.person.birthDate;
-        if(updateUserDto.person.gender !== undefined) personUpdateData.gender = updateUserDto.person.gender;
-        if(updateUserDto.person.riskLevel !== undefined) personUpdateData.riskLevel = updateUserDto.person.riskLevel;
-
-        if(Object.keys(personUpdateData).length > 0) {
+        if(updateUserDto.person.birthDate !== undefined) 
+          personUpdateData.birthDate = updateUserDto.person.birthDate;
+        if(updateUserDto.person.gender !== undefined) 
+          personUpdateData.gender = updateUserDto.person.gender;
+        if(updateUserDto.person.riskLevel !== undefined) 
+          personUpdateData.riskLevel = updateUserDto.person.riskLevel;
+        if(Object.keys(personUpdateData).length > 0)
           await queryRunner.manager.update(PersonEntity, { id: user.person.id }, personUpdateData);
-        }
       }
       
       if(user.userType === UserTypeEnum.INSTITUITION && updateUserDto.instituition) {
@@ -295,12 +308,13 @@ export class UserService {
           throw new BadRequestException('Usuário não possui dados de instituição.');
 
         const instituitionUpdateData: Partial<InstituitionEntity> = {};
-        if(updateUserDto.instituition.foundationDate !== undefined) instituitionUpdateData.foundationDate = updateUserDto.instituition.foundationDate;
-        if(updateUserDto.instituition.segment !== undefined) instituitionUpdateData.segment = updateUserDto.instituition.segment;
+        if(updateUserDto.instituition.foundationDate !== undefined) 
+          instituitionUpdateData.foundationDate = updateUserDto.instituition.foundationDate;
+        if(updateUserDto.instituition.segment !== undefined)
+          instituitionUpdateData.segment = updateUserDto.instituition.segment;
 
-        if(Object.keys(instituitionUpdateData).length > 0) {
+        if(Object.keys(instituitionUpdateData).length > 0)
           await queryRunner.manager.update(InstituitionEntity, { id: user.instituition.id }, instituitionUpdateData);
-        }
       }
       
       await queryRunner.commitTransaction();
@@ -322,12 +336,10 @@ export class UserService {
   async changePassword(id: number, changePassword: ChangePasswordDTO) {
     try{
       const user = await this.findByIdentifier(id);
-
       if(!user)
         throw new NotFoundException('Usuário não encontrado.');
 
       const validatePassword = await bcrypt.compare(changePassword.currentPassword, user.password);
-
       if(!validatePassword)
         throw new BadRequestException('Senha atual incorreta.');
 
@@ -335,7 +347,6 @@ export class UserService {
         throw new BadRequestException('As senhas não conferem.');
       
       const newHashedPassword = await bcrypt.hash(changePassword.newPassword, 10);
-
       const isSamePassword = await bcrypt.compare(changePassword.newPassword, user.password);
 
       if(isSamePassword)
@@ -371,23 +382,19 @@ export class UserService {
         relations: ['person', 'instituition']
       });
 
-      if(!user) {
+      if(!user)
         throw new NotFoundException('Usuário não encontrado.');
-      }
 
-      const senhaValida = await bcrypt.compare(password, user.password);
-
-      if(!senhaValida) {
+      const validatedPassword = await bcrypt.compare(password, user.password);
+      if(!validatedPassword)
         throw new BadRequestException('Senha inválida.');
-      }
 
-      if(user.userType === UserTypeEnum.PERSON && user.person) {
+
+      if(user.userType === UserTypeEnum.PERSON && user.person) 
         await queryRunner.manager.delete(PersonEntity, { id: user.person.id });
-      }
 
-      if(user.userType === UserTypeEnum.INSTITUITION && user.instituition) {
+      if(user.userType === UserTypeEnum.INSTITUITION && user.instituition)
         await queryRunner.manager.delete(InstituitionEntity, { id: user.instituition.id });
-      }
 
       await queryRunner.manager.delete(UserEntity, { id: user.id });
 
