@@ -244,9 +244,8 @@ export class UserService {
     await queryRunner.startTransaction();
 
     try{ 
-      if(!id) {
-        throw new UnauthorizedException('Usuário não autenticado.');
-      }
+      if(!id)
+        throw new UnauthorizedException('Usuário não autorizado.');
       
       const user = await queryRunner.manager.findOne(UserEntity, {
         where: { id: id },
@@ -254,7 +253,7 @@ export class UserService {
       });
 
       if(!user)
-        throw new NotFoundException('Usuário não autorizado.');
+        throw new NotFoundException('Usuário inválido');
 
       if(updateUserDto.email && updateUserDto.email !== user.email) {
         const emailExists = await queryRunner.manager.findOne(UserEntity, {
@@ -288,7 +287,7 @@ export class UserService {
 
       if(user.userType === UserTypeEnum.PERSON && updateUserDto.person) {
         if(!user.person)
-          throw new BadRequestException('Usuário não possui dados de pessoa.');
+          throw new BadRequestException('Usuário não possui cadastro de pessoa.');
 
         const personUpdateData: Partial<PersonEntity> = {};
         if(updateUserDto.person.birthDate !== undefined) 
@@ -303,7 +302,7 @@ export class UserService {
       
       if(user.userType === UserTypeEnum.INSTITUITION && updateUserDto.instituition) {
         if(!user.instituition)
-          throw new BadRequestException('Usuário não possui dados de instituição.');
+          throw new BadRequestException('Usuário não possui cadastro de instituição.');
 
         const instituitionUpdateData: Partial<InstituitionEntity> = {};
         if(updateUserDto.instituition.foundationDate !== undefined) 
@@ -325,7 +324,7 @@ export class UserService {
       if(erro instanceof NotFoundException || erro instanceof BadRequestException || erro instanceof UnauthorizedException)
         throw erro;
 
-      throw new InternalServerErrorException('Erro ao atualizar cadastro. Tente novamente.');
+      throw new InternalServerErrorException('Erro ao atualizar dados. Verifique os dados e tente novamente.');
     } finally {
       await queryRunner.release();
     }
@@ -333,9 +332,12 @@ export class UserService {
 
   async changePassword(id: number, changePassword: ChangePasswordDTO) {
     try{
+      if(!id)
+        throw new UnauthorizedException('Usuário não autorizado.');
+
       const user = await this.findByIdentifier(id);
       if(!user)
-        throw new NotFoundException('Usuário não encontrado.');
+        throw new NotFoundException('Usuário inválido.');
 
       const validatePassword = await bcrypt.compare(changePassword.currentPassword, user.password);
       if(!validatePassword)
@@ -372,16 +374,19 @@ export class UserService {
     await queryRunner.startTransaction();
 
     try {
-      if(!password)
-        throw new BadRequestException('Senha é obrigatória.');
+      if(!id)
+        throw new UnauthorizedException('Usuário não autorizado.');
+      
       
       const user = await queryRunner.manager.findOne(UserEntity, {
         where: { id },
         relations: ['person', 'instituition']
       });
-
       if(!user)
-        throw new NotFoundException('Usuário não encontrado.');
+        throw new NotFoundException('Usuário inválido.');
+      
+      if(!password)
+        throw new BadRequestException('Senha não informada.');
 
       const validatedPassword = await bcrypt.compare(password, user.password);
       if(!validatedPassword)
@@ -407,7 +412,7 @@ export class UserService {
       if(erro instanceof NotFoundException || erro instanceof BadRequestException)
         throw erro;
 
-      throw new InternalServerErrorException('Erro ao remover usuário. Tente novamente.');
+      throw new InternalServerErrorException('Erro ao excluir conta. Tente novamente.');
     } finally {
       await queryRunner.release();
     }
