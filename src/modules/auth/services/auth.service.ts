@@ -23,7 +23,7 @@ export class AuthService {
     private readonly verificationService: VerificationService
   ){}
 
-  async validateLoginUser(login: string, password: string){
+  async validateLoginUser(login: string, password: string): Promise<any>{
     try {
       const user = await this.userService.findByIdentifier(login);
       const match = user ? await bcrypt.compare(password, user.password) : null;
@@ -67,7 +67,7 @@ export class AuthService {
     }
   }
 
-  async getTokens(payload: {sub: number}){
+  async getTokens(payload: {sub: number}): Promise<{accessToken: string, refreshToken: string}>{
     try {
       const accessToken = await this.jwtService.signAsync(
         {sub: payload.sub},
@@ -93,7 +93,7 @@ export class AuthService {
     }
   }
 
-  async refreshTokens(req: Request){
+  async refreshTokens(req: Request): Promise<{accessToken: string, refreshToken: string}>{
     try {
       const refreshToken = req.cookies?.refreshToken || (req.body && req.body.refreshToken); 
       if (!refreshToken) 
@@ -127,7 +127,7 @@ export class AuthService {
     }
   }
 
-  async logout(userId: number){
+  async logout(userId: number): Promise<void>{
     try {
       if(!userId)
         throw new UnauthorizedException('Usuário não autenticado.');
@@ -160,7 +160,7 @@ export class AuthService {
     return tokens;
   }
 
-  async forgotPassword(forgotPasswordDTO: ForgotPasswordDTO){
+  async forgotPassword(forgotPasswordDTO: ForgotPasswordDTO): Promise<void>{
     const user = await this.userService.findByIdentifier(forgotPasswordDTO.email, false);
 
     if(!user)
