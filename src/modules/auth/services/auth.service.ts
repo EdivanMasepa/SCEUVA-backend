@@ -34,11 +34,11 @@ export class AuthService {
       const {password: _p, ...rest } = user as any; 
       return rest;
 
-    } catch (erro) {
-      console.log(erro);
+    } catch (error) {
+      console.log(error);
       
-      if(erro instanceof BadRequestException)
-        throw erro
+      if(error instanceof BadRequestException)
+        throw error
 
       throw new InternalServerErrorException('Erro interno, verifique os dados e tente novamente.')
     }
@@ -57,11 +57,11 @@ export class AuthService {
 
       return tokens;
 
-    } catch (erro) {
-      console.log(erro);
+    } catch (error) {
+      console.log(error);
       
-      if(erro instanceof BadRequestException)
-        throw erro
+      if(error instanceof BadRequestException)
+        throw error
 
       throw new InternalServerErrorException('Erro interno, verifique os dados e tente novamente.')
     }
@@ -86,8 +86,8 @@ export class AuthService {
       )
 
       return {accessToken, refreshToken};
-    } catch (erro) {
-      console.log(erro);
+    } catch (error) {
+      console.log(error);
       
       throw new InternalServerErrorException('Erro ao gerar tokens de autenticação.')
     }
@@ -117,11 +117,11 @@ export class AuthService {
       await this.userService.setRefreshToken(hashed, user.id);
 
       return tokens;
-    } catch (erro) {   
-      console.log(erro);
+    } catch (error) {   
+      console.log(error);
          
-      if (erro instanceof HttpException) 
-        throw erro;
+      if (error instanceof HttpException) 
+        throw error;
 
       throw new InternalServerErrorException('Erro ao atualizar token.'); 
     }
@@ -134,11 +134,11 @@ export class AuthService {
       
       await this.userService.removeRefreshToken(userId);
       
-    } catch (erro) {
-      console.log(erro);
+    } catch (error) {
+      console.log(error);
       
-      if(erro instanceof UnauthorizedException)
-        throw erro;
+      if(error instanceof UnauthorizedException)
+        throw error;
 
       throw new InternalServerErrorException('Erro ao remover token.')
     }
