@@ -15,7 +15,6 @@ export class VerificationService {
         const code = this.generateCode();
 
         await this.verificationStorage.save(email, code); 
-
         return code;
     }
 

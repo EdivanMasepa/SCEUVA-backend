@@ -47,7 +47,7 @@ export class AuthController {
     { status: 500, description: 'Erro ao gerar tokens de autenticação.' },
     { status: 500, description: 'Erro ao atualizar token.' }
   ])
-  async refresh(@Req() req: Request, @Res({passthrough: true}) res: Response) {
+  async refresh(@Req() req: Request, @Res({passthrough: true}) res: Response): Promise<{accessToken: string}> {
     const tokens = await this.authService.refreshTokens(req);
     res.cookie('refreshToken', tokens.refreshToken, {
       httpOnly: true,
@@ -65,7 +65,7 @@ export class AuthController {
     { status: 401, description: 'Usuário não autenticado.' },
     { status: 500, description: 'Erro ao remover token.' }
   ])
-  async logout(@Req() req: Request, @Res({passthrough: true}) res: Response){
+  async logout(@Req() req: Request, @Res({passthrough: true}) res: Response): Promise<{status: string, message: string}> {
     const userId = (req as any).user?.id;
     await this.authService.logout(userId);
 
@@ -77,10 +77,9 @@ export class AuthController {
   }
 
   @Post('resend-verification-email')
-  resendVerificationEmail(@Body() emailDto: EmailDTO, @Res({passthrough: true}) res: Response) {
+  resendVerificationEmail(@Body() emailDto: EmailDTO): Promise<{statusCode: number, message: string}> {
     return this.emailVerificationService.resendVerificationEmail(emailDto.email);
   }
-
 
   @Post('verify-email')
   async verifyEmail(@Body() verifyEmailDto: VerifyEmailDTO, @Res({passthrough: true}) res: Response): Promise<{accessToken: string}> {
@@ -97,7 +96,7 @@ export class AuthController {
   }
 
   @Post('forgot-password')
-  async forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDTO) {
+  async forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDTO): Promise<void> {
     return this.authService.forgotPassword(forgotPasswordDto);
   }
 }

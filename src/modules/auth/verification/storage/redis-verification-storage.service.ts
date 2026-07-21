@@ -39,11 +39,10 @@ export class RedisVerificationStorageService implements VerificationStorage {
         }
         
         await this.remove(email);
-
         return true;
     }
 
-    async remove(email: string): Promise <void> {
+    async remove(email: string): Promise<void> {
         await this.redisService
             .getClient()
             .del(`email_verification: ${email}`);

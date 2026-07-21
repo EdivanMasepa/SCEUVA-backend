@@ -14,7 +14,6 @@ export class EmailVerificationService {
 
     async sendVerificationEmail(email: string): Promise<string> {
         const code = await this.verificationService.create(email);
-
         const message = `
 Olá! 👋
 
@@ -50,7 +49,7 @@ Equipe SCEUVA.
         return{statusCode: 200, message: 'Email reenviado com sucesso.'};
     }
 
-    async verifyEmail(email: string, code: string): Promise<void>{
+    async verifyEmail(email: string, code: string): Promise<void> {
         try{
             const user = await this.userService.findByIdentifier(email, false);
 
@@ -70,6 +69,7 @@ Equipe SCEUVA.
             };
 
             await this.userService.update(user.id, userUpdated);
+            
         }catch(erro){
             if(erro instanceof NotFoundException || erro instanceof BadRequestException)
                 throw erro;

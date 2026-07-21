@@ -7,7 +7,6 @@ export class MemoryVerificationStorageService implements VerificationStorage {
     private storage = new Map<string, VerificationData>();
 
     async save(email: string, code: string): Promise<void> {
-
         this.storage.set(email, {
             code,
             expiresAt: Date.now() + 1000 * 60 * 15
